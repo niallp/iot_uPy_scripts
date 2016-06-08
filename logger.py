@@ -7,6 +7,7 @@ import time
 import machine
 from machine import RTC
 from machine import Pin
+from machine import ADC
 
 import wipy
 
@@ -34,16 +35,30 @@ def mtpPub(topic, data):
   return  mtPacket(0b00110001, mtStr(topic), data)
 
 # for periodic publishing
-def publish_handler (rtc_o):
+def publish_handler(rtc_o):
     global pubCount
     p_usr.value(0)
     pubCount += 1
     p_usr.value(1)
 
+# returns temperature in degree C from LM35 as string
+def lm35C_str(adc):
+    milliVolts = (adc()*1100*4) // (3 * 4096)
+    return str(milliVolts // 10) + "." + str(milliVolts % 10)
+
+# account for voltage divider of 115k over 56k on Vinput
+def vin_str(adc):
+    milliVolts = (adc()*171*1100*4) // (3*56*4096)
+    return str(milliVolts // 1000) + "." + str(milliVolts % 1000)
+
 #setup 
 wipy.heartbeat(False)
 p_usr = Pin('GP16', mode=Pin.OUT)
 p_usr.value(1)		# turn off user LED
+
+adc = ADC()
+vin = adc.channel(pin='GP3')
+lm35 = adc.channel(pin='GP5')
 
 pubCount = 0
 nextCount = pubCount
@@ -64,7 +79,9 @@ time.sleep(1)
 s.send(mtpPub("wipy1",b"starting:"+str(pubCount)))
 
 while True:
-    s.send(mtpPub("wipy1",b"Iter:"+str(pubCount)))
+    s.send(mtpPub("wipy1/iter",str(pubCount)))
+    s.send(mtpPub("wipy1/temp",lm35C_str(lm35)))
+    s.send(mtpPub("wipy1/vin",vin_str(vin)))
     nextCount += 1
     while nextCount > pubCount:
         machine.idle()
