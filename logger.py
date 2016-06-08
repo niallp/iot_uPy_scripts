@@ -35,11 +35,12 @@ def mtpPub(topic, data):
 
 # for periodic publishing
 def publish_handler (rtc_o):
-	p_usr.value(0)
-	pubCount += 1
-	s.send(mtpPub("wipy1",b"Iter:"+str(pubCount)))
-	p_usr.value(1)
-	machine.sleep()
+    global pubCount
+    p_usr.value(0)
+    pubCount += 1
+    #s.send(mtpPub("wipy1",b"Iter:"+str(pubCount)))
+    p_usr.value(1)
+    machine.sleep()
 
 #setup 
 wipy.heartbeat(False)
