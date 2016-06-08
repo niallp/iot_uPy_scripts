@@ -38,9 +38,7 @@ def publish_handler (rtc_o):
     global pubCount
     p_usr.value(0)
     pubCount += 1
-    #s.send(mtpPub("wipy1",b"Iter:"+str(pubCount)))
     p_usr.value(1)
-    machine.sleep()
 
 #setup 
 wipy.heartbeat(False)
@@ -48,10 +46,11 @@ p_usr = Pin('GP16', mode=Pin.OUT)
 p_usr.value(1)		# turn off user LED
 
 pubCount = 0
+nextCount = pubCount
 
-# setup RTC interrupt handler to publish once a minute
+# setup RTC interrupt handler to publish once every period
 rtc = machine.RTC()
-rtc_i = rtc.irq(trigger=RTC.ALARM0, handler=publish_handler, wake=machine.SLEEP)
+rtc_i = rtc.irq(trigger=RTC.ALARM0, handler=publish_handler, wake=machine.IDLE)
 rtc.alarm(time=10000, repeat=True)
 
 #open socket and send first message
@@ -60,8 +59,12 @@ s = socket.socket()
 s.connect(addr)
 s.send(mtpConnect("wipy1"))
 
-time.sleep(2)
+time.sleep(1)
 
 s.send(mtpPub("wipy1",b"starting:"+str(pubCount)))
 
-machine.sleep()
+while True:
+    s.send(mtpPub("wipy1",b"Iter:"+str(pubCount)))
+    nextCount += 1
+    while nextCount > pubCount:
+        machine.idle()
