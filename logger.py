@@ -9,9 +9,13 @@ from machine import RTC
 from machine import Pin
 from machine import ADC
 
+import os
 import wipy
 
-brdName = "wipy"
+if os.uname().machine == 'LaunchPad with CC3200':
+    brdName = 'lp1'
+else:
+    brdName = 'wipy'
 
 # mqtt publish fcns from mqtt-publish.py (github, GPL v 2)
 def mtStr(s):
