@@ -11,6 +11,8 @@ from machine import ADC
 
 import wipy
 
+brdName = "wipy"
+
 # mqtt publish fcns from mqtt-publish.py (github, GPL v 2)
 def mtStr(s):
   return bytes([len(s) >> 8, len(s) & 255]) + s.encode('utf-8')
@@ -72,16 +74,16 @@ rtc.alarm(time=10000, repeat=True)
 addr = socket.getaddrinfo("pogoplug",1883)[0][4]
 s = socket.socket()
 s.connect(addr)
-s.send(mtpConnect("wipy1"))
+s.send(mtpConnect(brdName))
 
 time.sleep(1)
 
-s.send(mtpPub("wipy1",b"starting:"+str(pubCount)))
+s.send(mtpPub(brdName,b"starting:"+str(pubCount)))
 
 while True:
-    s.send(mtpPub("wipy1/iter",str(pubCount)))
-    s.send(mtpPub("wipy1/temp",lm35C_str(lm35)))
-    s.send(mtpPub("wipy1/vin",vin_str(vin)))
+    s.send(mtpPub(brdName+"/iter",str(pubCount)))
+    s.send(mtpPub(brdName+"/temp",lm35C_str(lm35)))
+    s.send(mtpPub(brdName+"/vin",vin_str(vin)))
     nextCount += 1
     while nextCount > pubCount:
         machine.idle()
