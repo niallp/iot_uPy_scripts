@@ -78,10 +78,10 @@ wipy.heartbeat(False)       # use as debug LED (manually)
 
 p_usr = Pin('GP16', mode=Pin.OUT)
 p_usr.value(1)		# turn off user LED (not on LP)
+adc = ADC()
+vin = adc.channel(pin='GP3')
 
 if isWiPy:
-    adc = ADC()
-    vin = adc.channel(pin='GP3')
     lm35 = adc.channel(pin='GP5')
 else:
     i2c_pins = ('GP11','GP10')
@@ -90,8 +90,6 @@ else:
     if not 65 in devices:    # TMP006 at address 64 (0x41) by default
         raise SystemExit
     
-
-
 pubCount = 0
 nextCount = pubCount
 
@@ -112,12 +110,11 @@ s.send(mtpPub(brdName,b"starting:"+str(pubCount)))
 
 while True:
     s.send(mtpPub(brdName+"/iter",str(pubCount)))
+    vStr = vin_str(vin)
     if isWiPy:
         tStr = lm35C_str(lm35)
-        vStr = vin_str(vin)
     else:
         tStr = tmp006_str(i2c)
-        vStr = 'NA'
     s.send(mtpPub(brdName+"/temp",tStr))
     s.send(mtpPub(brdName+"/vin",vStr))
     nextCount += 1
