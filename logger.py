@@ -8,14 +8,23 @@ import machine
 from machine import RTC
 from machine import Pin
 from machine import ADC
+from machine import I2C
 
 import os
 import wipy
 
-if os.uname().machine == 'LaunchPad with CC3200':
+mch = os.uname().machine
+if 'LaunchPad' in mch:
     brdName = 'lp1'
-else:
+    isWiPy = False
+    TMP006 = 0x41       # i2c address
+    DIE_T = 0x01        # die temperature register
+elif 'WiPy' in mch:
     brdName = 'wipy'
+    isWiPy = True
+else:
+    print("Board not recognized")
+    raise SystemExit
 
 # mqtt publish fcns from mqtt-publish.py (github, GPL v 2)
 def mtStr(s):
@@ -47,6 +56,13 @@ def publish_handler(rtc_o):
     pubCount += 1
     p_usr.value(1)
 
+# returns temperature string in C from TMP006 (die temperature
+def tmp006_str(i2c):
+    data = i2c.readfrom_mem(TMP006,DIE_T,2)
+    degC = (data[0] << 1) + (data[1] >> 7)
+    degC_32nd = (data[1] & 0x7f) >> 2       # 32nds of degrees
+    return str(degC) + "." + str((degC_32nd*10 + 16) >> 5)
+
 # returns temperature in degree C from LM35 as string
 def lm35C_str(adc):
     milliVolts = (adc()*1100*4) // (3 * 4096)
@@ -58,13 +74,23 @@ def vin_str(adc):
     return str(milliVolts // 1000) + "." + str(milliVolts % 1000)
 
 #setup 
-wipy.heartbeat(False)
-p_usr = Pin('GP16', mode=Pin.OUT)
-p_usr.value(1)		# turn off user LED
+wipy.heartbeat(False)       # use as debug LED (manually)
 
-adc = ADC()
-vin = adc.channel(pin='GP3')
-lm35 = adc.channel(pin='GP5')
+p_usr = Pin('GP16', mode=Pin.OUT)
+p_usr.value(1)		# turn off user LED (not on LP)
+
+if isWiPy:
+    adc = ADC()
+    vin = adc.channel(pin='GP3')
+    lm35 = adc.channel(pin='GP5')
+else:
+    i2c_pins = ('GP11','GP10')
+    i2c = I2C(mode=I2C.MASTER, baudrate=1000000, pins=i2c_pins)
+    devices = i2c.scan()
+    if not 65 in devices:    # TMP006 at address 64 (0x41) by default
+        raise SystemExit
+    
+
 
 pubCount = 0
 nextCount = pubCount
@@ -86,8 +112,14 @@ s.send(mtpPub(brdName,b"starting:"+str(pubCount)))
 
 while True:
     s.send(mtpPub(brdName+"/iter",str(pubCount)))
-    s.send(mtpPub(brdName+"/temp",lm35C_str(lm35)))
-    s.send(mtpPub(brdName+"/vin",vin_str(vin)))
+    if isWiPy:
+        tStr = lm35C_str(lm35)
+        vStr = vin_str(vin)
+    else:
+        tStr = tmp006_str(i2c)
+        vStr = 'NA'
+    s.send(mtpPub(brdName+"/temp",tStr))
+    s.send(mtpPub(brdName+"/vin",vStr))
     nextCount += 1
     while nextCount > pubCount:
         machine.idle()
