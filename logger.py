@@ -15,7 +15,11 @@ import wipy
 
 mch = os.uname().machine
 if 'LaunchPad' in mch:
-    brdName = 'lp1'
+    uniq = machine.unique_id()
+    if uniq[5] == 0xfe:
+        brdName = 'lp2'
+    else:
+        brdName = 'lp1'
     isWiPy = False
     TMP006 = 0x41       # i2c address
     DIE_T = 0x01        # die temperature register
