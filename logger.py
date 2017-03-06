@@ -6,6 +6,8 @@ import time
 import machine
 import os
 
+import mqtt
+
 mch = os.uname().machine
 uniq = machine.unique_id()
 if 'ESP8266' in mch:
@@ -16,29 +18,6 @@ if 'ESP8266' in mch:
 else:
     print("Board not recognized, for ESP2866 only now")
     raise SystemExit
-
-# mqtt publish fcns from mqtt-publish.py (github, GPL v 2)
-def mtStr(s):
-  return bytes([len(s) >> 8, len(s) & 255]) + s.encode('utf-8')
-
-def mtPacket(cmd, variable, payload):
-  return bytes([cmd, len(variable) + len(payload)]) + variable + payload
-
-def mtpConnect(name):
-  return mtPacket(
-           0b00010000,
-           mtStr("MQTT") + # protocol name
-           b'\x04' +       # protocol level
-           b'\x00' +       # connect flag
-           b'\xFF\xFF',    # keepalive
-           mtStr(name)
-  )
-
-def mtpDisconnect():
-  return bytes([0b11100000, 0b00000000])
-
-def mtpPub(topic, data):
-  return  mtPacket(0b00110001, mtStr(topic), data)
 
 # for periodic publishing
 def publish_handler(rtc_o):
@@ -69,16 +48,16 @@ tmr.init(period=10000, mode=machine.Timer.PERIODIC, callback=publish_handler)
 addr = socket.getaddrinfo("pogoplug",1883)[0][4]
 s = socket.socket()
 s.connect(addr)
-s.send(mtpConnect(brdName))
+s.send(mqtt.connect(brdName))
 
 time.sleep(1)
 
-s.send(mtpPub(brdName,b"starting:"+str(pubCount)))
+s.send(mqtt.pub(brdName,b"starting:"+str(pubCount)))
 
 while True:
-    s.send(mtpPub(brdName+"/iter",str(pubCount)))
+    s.send(mqtt.pub(brdName+"/iter",str(pubCount)))
     vStr = vin_str(vin)
-    s.send(mtpPub(brdName+"/vin",vStr))
+    s.send(mqtt.pub(brdName+"/vin",vStr))
     nextCount += 1
     while nextCount > pubCount:
         machine.idle()
