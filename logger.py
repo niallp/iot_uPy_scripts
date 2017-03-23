@@ -8,6 +8,9 @@ import os
 
 import mqtt
 
+import onewire
+import ds18x20
+
 mch = os.uname().machine
 uniq = machine.unique_id()
 if 'ESP8266' in mch:
@@ -43,10 +46,26 @@ s = socket.socket()
 s.connect(addr)
 s.send(mqtt.connect(brdName))
 print("connecting to broker")
-time.sleep(1)           # allow connection setup
+
+ow = machine.Pin(12)
+ds = ds18x20.DS18X20(onewire.OneWire(ow))
+roms = ds.scan()
+if len(roms) == 0:
+    tempFlg = False
+else:
+    ds.convert_temp()
+    tempFlg = True
+
+time.sleep(1)           # allow connection setup and temperature read
+if tempFlg:
+    tempStr = str(ds.read_temp(roms[0]))
+else:
+    tempStr = "none"
 vStr = vin_str(vin,adcScl)
 s.send(mqtt.pub(brdName+"/vin",vStr))
-print('send:'+brdName+"/vin/"+vStr)
+time.sleep_ms(100)
+s.send(mqtt.pub(brdName+"/temp/0",tempStr))
+
 time.sleep(1)
 s.send(mqtt.disconnect())
 s.close()
