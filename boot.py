@@ -3,6 +3,7 @@ import esp
 esp.osdebug(None)
 import machine
 cause = machine.reset_cause()
+print("Reset cause: "+str(cause))
 if (cause == machine.PWRON_RESET) or (cause == machine.DEEPSLEEP_RESET):
     exec(open('logger.py').read())
 else:
