@@ -1,14 +1,17 @@
-# basic data logger using WiPy
-# fork back to wipy
-# Niall Parker, 7apr2016
+# pub/sub button LED gadget for stage communication
 from machine import Pin
-import socket
 import time
 import machine
 import os
 import wipy
+from simple import MQTTClient
 
-import mqtt
+def sub_cb(topic, msg)
+    global grn, yel
+    if topic=='led_green':
+        grn.value(int(msg))
+    if topic=='led_yellow':
+        yel.value(int(msg))
 
 mch = os.uname().machine
 uniq = machine.unique_id()
@@ -21,13 +24,6 @@ else:
     print("LaunchPad only for now")
     raise SystemExit
 
-# for periodic publishing
-def publish_handler(rtc_o):
-    global pubCount
-    red.value(1)
-    pubCount += 1
-    red.value(0)
-
 #setup 
 wipy.heartbeat(False)
 red = Pin('GP9', mode=Pin.OUT)
@@ -36,28 +32,17 @@ grn = Pin('GP11', mode=Pin.OUT)
 sw2 = Pin('GP22', mode=Pin.IN)
 sw3 = Pin('GP13', mode=Pin.IN)
 
-pubCount = 0
-nextCount = pubCount
-
-# setup RTC interrupt handler to publish once every period
-rtc = machine.RTC()
-rtc_i = rtc.irq(trigger=machine.RTC.ALARM0, handler=publish_handler, wake=machine.IDLE)
-rtc.alarm(time=2000, repeat=True)
-
-#open socket and send first message
-addr = socket.getaddrinfo("pogo2",1883)[0][4]
-s = socket.socket()
-s.connect(addr)
-s.send(mqtt.connect(brdName))
+#open client 
+c = MQTTClient("umqtt_client","pogo2")
+c.set_callback(sub_cb)
+c.connect()
+c.subscribe(b"led_green")
 
 time.sleep(1)
 
-s.send(mqtt.pub(brdName,b"starting:"+str(pubCount)))
-
 while True:
-    s.send(mqtt.pub(brdName+"/iter",str(pubCount)))
-    s.send(mqtt.pub(brdName+"/sw2",str(sw2.value())))
-    s.send(mqtt.pub(brdName+"/sw3",str(sw3.value())))
-    nextCount += 1
-    while nextCount > pubCount:
-        machine.idle()
+    c.check_msg()
+    c.publish(b"led_green",str(sw3.value()))
+    time.sleep_ms(500)
+
+c.disconnect()
