@@ -24,19 +24,9 @@ else:
 # for periodic publishing
 def publish_handler(rtc_o):
     global pubCount
-    p_usr.value(0)
+    red.value(1)
     pubCount += 1
-    p_usr.value(1)
-
-# returns temperature in degree C from LM35 as string
-def lm35C_str(adc):
-    milliVolts = (adc()*1100*4) // (3 * 4096)
-    return str(milliVolts // 10) + "." + str(milliVolts % 10)
-
-# account for voltage divider of 115k over 56k on Vinput
-def vin_str(adc):
-    milliVolts = (adc()*171*1100*4) // (3*56*4096)
-    return str(milliVolts // 1000) + "." + str(milliVolts % 1000)
+    red.value(0)
 
 #setup 
 wipy.heartbeat(False)
@@ -52,7 +42,7 @@ nextCount = pubCount
 # setup RTC interrupt handler to publish once every period
 rtc = machine.RTC()
 rtc_i = rtc.irq(trigger=machine.RTC.ALARM0, handler=publish_handler, wake=machine.IDLE)
-rtc.alarm(time=60000, repeat=True)
+rtc.alarm(time=2000, repeat=True)
 
 #open socket and send first message
 addr = socket.getaddrinfo("pogo2",1883)[0][4]
