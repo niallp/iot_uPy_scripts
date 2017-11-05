@@ -6,12 +6,10 @@ import os
 import wipy
 from simple import MQTTClient
 
-def sub_cb(topic, msg)
+def sub_cb(topic, msg):
     global grn, yel
-    if topic=='led_green':
-        grn.value(int(msg))
-    if topic=='led_yellow':
-        yel.value(int(msg))
+    grn.value(int(int(msg)//10))
+    yel.value(int(int(msg)%10))
 
 mch = os.uname().machine
 uniq = machine.unique_id()
@@ -33,16 +31,22 @@ sw2 = Pin('GP22', mode=Pin.IN)
 sw3 = Pin('GP13', mode=Pin.IN)
 
 #open client 
-c = MQTTClient("umqtt_client","pogo2")
+c = MQTTClient(brdName,"pogo2")
 c.set_callback(sub_cb)
 c.connect()
-c.subscribe(b"led_green")
+c.subscribe(b"leds")
 
 time.sleep(1)
 
+prev_sw2 = sw2.value()
+prev_sw3 = sw3.value()
+
 while True:
     c.check_msg()
-    c.publish(b"led_green",str(sw3.value()))
+    if prev_sw2 != sw2.value() or prev_sw3 != sw3.value():
+        c.publish(b"leds",str(sw2.value()+10*sw3.value()))
+    prev_sw2 = sw2.value()
+    prev_sw3 = sw3.value()
     time.sleep_ms(500)
 
 c.disconnect()
