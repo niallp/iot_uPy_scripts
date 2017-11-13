@@ -6,7 +6,7 @@ import time
 import machine
 import os
 
-from mqtt_simple import MQTTClient
+from umqtt_simple import MQTTClient
 
 import onewire
 import ds18x20
