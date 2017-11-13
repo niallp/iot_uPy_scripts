@@ -8,7 +8,7 @@ import machine
 import os
 import wipy
 
-import mqtt
+from umqtt_simple import MQTTClient
 
 mch = os.uname().machine
 uniq = machine.unique_id()
@@ -52,20 +52,20 @@ rtc = machine.RTC()
 rtc_i = rtc.irq(trigger=machine.RTC.ALARM0, handler=publish_handler, wake=machine.IDLE)
 rtc.alarm(time=60000, repeat=True)
 
-#open socket and send first message
-addr = socket.getaddrinfo("pogoplug",1883)[0][4]
-s = socket.socket()
-s.connect(addr)
-s.send(mqtt.connect(brdName))
+#open client
+c = MQTTClient(brdName,"mqtt")
+c.connect()
+print("connecting to broker")
 
 time.sleep(1)
 
-s.send(mqtt.pub(brdName,b"starting:"+str(pubCount)))
-
 while True:
-    s.send(mqtt.pub(brdName+"/iter",str(pubCount)))
-    s.send(mqtt.pub(brdName+"/temp",lm35C_str(lm35)))
-    s.send(mqtt.pub(brdName+"/vin",vin_str(vin)))
+    c.publish(brdName+"/iter",str(pubCount))
+    c.publish(brdName+"/temp",lm35C_str(lm35))
+    c.publish(brdName+"/vin",vin_str(vin))
     nextCount += 1
     while nextCount > pubCount:
         machine.idle()
+
+time.sleep(1)
+c.disconnect()
