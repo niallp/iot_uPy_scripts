@@ -6,7 +6,7 @@ import time
 import machine
 import os
 
-import mqtt
+from mqtt_simple import MQTTClient
 
 import onewire
 import ds18x20
@@ -40,11 +40,9 @@ rtc = machine.RTC()
 rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
 rtc.alarm(rtc.ALARM0,60000)
 
-#open socket and send first message
-addr = socket.getaddrinfo("pogoplug",1883)[0][4]
-s = socket.socket()
-s.connect(addr)
-s.send(mqtt.connect(brdName))
+#open client
+c = MQTTClient(brdName,"mqtt")
+c.connect()
 print("connecting to broker")
 
 ow = machine.Pin(12)
@@ -62,13 +60,12 @@ if tempFlg:
 else:
     tempStr = "none"
 vStr = vin_str(vin,adcScl)
-s.send(mqtt.pub(brdName+"/vin",vStr))
+c.publish(brdName+"/vin",vStr)
 time.sleep_ms(100)
-s.send(mqtt.pub(brdName+"/temp/0",tempStr))
+c.publish(brdName+"/temp/0",tempStr)
 
 time.sleep(1)
-s.send(mqtt.disconnect())
-s.close()
+c.disconnect()
 
 print('back to sleep')
 machine.deepsleep()     # back to sleep
