@@ -44,9 +44,11 @@ def dist_str(uart,s_pwr,tx_en):
     tx_en.value(1)
     utime.sleep_ms(500)     # wait for 3 or so readings
     tx_en.value(0)
-    data_str = uart.readline()
+    val_str = uart.readline()
     s_pwr.value(0)
-    return data_str
+    vals = [int(s[1:]) for s in val_str.split()]
+    dist = sum(vals) // len(vals)
+    return str(dist)
 
 
 #setup 
