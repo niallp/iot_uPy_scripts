@@ -42,6 +42,8 @@ rtc.alarm(rtc.ALARM0,60000)
 
 #open client
 c = MQTTClient(brdName,"mqtt")
+# extra delay to allow network to stabilize
+time.sleep(1)           
 c.connect()
 print("connecting to broker")
 
