@@ -1,6 +1,8 @@
 # basic data logger using WiPy
 # fork for esp2866 modules
 # Niall Parker, 7apr2016
+# adapt for Thingsboard demo
+
 import socket
 import time
 import machine
@@ -10,6 +12,8 @@ from umqtt_simple import MQTTClient
 
 import onewire
 import ds18x20
+
+userToken = 'N2pEGdYIyixgHdAYmfAQ'   # actually token of device
 
 mch = os.uname().machine
 uniq = machine.unique_id()
@@ -30,7 +34,7 @@ def vin_str(adc,scl):
     for r in range(10):     # average over 10 in case of noise
         acc += adc()
     milliVolts = ((acc-25)*scl) // 1024
-    return str(milliVolts // 1000) + "." + "{0:0>3}".format(milliVolts % 1000)
+    return str(milliVolts // 1000) + "." + "{0:0>3}".format(milliVolts % 1000) 
 
 #setup 
 adc = machine.ADC(0)
@@ -41,7 +45,7 @@ rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
 rtc.alarm(rtc.ALARM0,60000)
 
 #open client
-c = MQTTClient(brdName,"mqtt")
+c = MQTTClient(brdName,"demo.thingsboard.io",keepalive=30,user=userToken,password='')
 # extra delay to allow network to stabilize
 time.sleep(1)           
 c.connect()
@@ -62,9 +66,8 @@ if tempFlg:
 else:
     tempStr = "none"
 vStr = vin_str(vin,adcScl)
-c.publish(brdName+"/vin",vStr)
+c.publish("v1/devices/me/telemetry","{'volts' : "+vStr+ ", 'temperature' : "+ tempStr + "}")
 time.sleep_ms(100)
-c.publish(brdName+"/temp/0",tempStr)
 
 time.sleep(1)
 c.disconnect()
