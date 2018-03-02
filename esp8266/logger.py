@@ -13,7 +13,7 @@ from umqtt_simple import MQTTClient
 import onewire
 import ds18x20
 
-userToken = 'N2pEGdYIyixgHdAYmfAQ'   # actually token of device
+userToken = 'AAcN0MpuEnze9URXyBJ9'   # actually token of device
 
 mch = os.uname().machine
 uniq = machine.unique_id()
@@ -45,7 +45,7 @@ rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
 rtc.alarm(rtc.ALARM0,60000)
 
 #open client
-c = MQTTClient(brdName,"demo.thingsboard.io",keepalive=30,user=userToken,password='')
+c = MQTTClient(brdName,"thingsboard",keepalive=30,user=userToken,password='')
 # extra delay to allow network to stabilize
 time.sleep(1)           
 c.connect()
