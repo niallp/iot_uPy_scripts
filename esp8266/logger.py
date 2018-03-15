@@ -13,17 +13,25 @@ from umqtt_simple import MQTTClient
 import onewire
 import ds18x20
 
-userToken = 'AAcN0MpuEnze9URXyBJ9'   # actually token of device
-
 mch = os.uname().machine
 uniq = machine.unique_id()
 if 'ESP8266' in mch:
     if uniq[0] == 0x5d:
         brdName = 'esp12a'
         adcScl = 548
-    else:
+        userToken = 'AAcN0MpuEnze9URXyBJ9'
+    elif uniq == b'\x02\t\xf9\x00':
         brdName = 'esp12b'
         adcScl = 531
+        userToken = 'R3piEqJNiAxassZHL84O'
+    elif uniq == b'\x99\xf1\xf3\x00':
+        brdName = 'esp12c'
+        adcScl = 540
+        userToken = 'lLCGCMDBHl3G7FUHJ6LR'
+    else:
+        brdName = 'esp12d'
+        adcScl = 540
+        userToken = 'eubEzHnrUFsFOaT9uNjS'
 else:
     print("Board not recognized, for ESP2866 only now")
     raise SystemExit
