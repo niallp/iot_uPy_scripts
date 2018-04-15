@@ -10,6 +10,7 @@ from machine import Timer
 from L76GNSS import L76GNSS
 from pytrack import Pytrack
 from mqtt import MQTTClient
+from pycom import rgbled
 
 # setup as a station (in boot.py)
 
@@ -41,6 +42,12 @@ client.connect()
 while (True):
     coord = l76.coordinates()
     #f.write("{} - {}\n".format(coord, rtc.now()))
+    if coord == (None,None):
+        rgbled(0x0f0000)
+    else:
+        rgbled(0x000f00)
     print("{} - {} - {}".format(coord, rtc.now(), gc.mem_free()))
-    client.publish(topic="v1/devices/me/telemetry",msg="{'latitude' : "+str(coord[0])+ ", 'longitude' : "+str(coord[1]) + "}")
-    time.sleep(1)
+    if coord != (None,None):
+        client.publish(topic="v1/devices/me/telemetry",msg="{'latitude' : "+str(coord[0])+ ", 'longitude' : "+str(coord[1]) + "}")
+    rgbled(0)
+    time.sleep(5)
