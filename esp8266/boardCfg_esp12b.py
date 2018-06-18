@@ -1,5 +1,5 @@
 brdName = 'esp12b'
-userToken = 'RpiEqJNiAxassZHL84O'
+userToken = 'R3piEqJNiAxassZHL84O'
 adcScl = 531
 mqttHost = 'thingsboard'
 known_nets = {
