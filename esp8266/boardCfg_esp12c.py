@@ -1,6 +1,6 @@
 brdName = 'esp12c'
 userToken = 'lLCGCMDBHl3G7FUHJ6LR'
-adcScl = 540
+adcScl = 555
 mqttHost = 'thingsboard'
 known_nets = {
     'balskG': {'pwd': None},
