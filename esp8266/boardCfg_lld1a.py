@@ -1,6 +1,6 @@
 brdName = 'lld1a'
 userToken = 'J2qBiBWLm6rw62sNtd6W'
-adcScl = 438
+adcScl = 442
 mqttHost = 'thingsboard'
 known_nets = {
     'balskG': {'pwd': None},
