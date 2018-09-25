@@ -19,10 +19,13 @@ import machine
 cause = machine.reset_cause()
 print("Reset cause: "+str(cause))
 do_connect()
-if (cause == machine.PWRON_RESET) or (cause == machine.DEEPSLEEP_RESET):
-    exec(open('logger.py').read())
-else:
+if (cause != machine.DEEPSLEEP_RESET):
+    # if wasn't deepsleep wakeup, give user a chance to intervene
     import gc
     import webrepl
     webrepl.start()
     gc.collect()
+    from utime import sleep
+    sleep(120)
+
+exec(open('logger.py').read())
