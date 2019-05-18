@@ -13,6 +13,7 @@ from umqtt_simple import MQTTClient
 
 import onewire
 import ds18x20
+import dht
 
 from boardCfg import brdName
 from boardCfg import adcScl
@@ -42,8 +43,7 @@ time.sleep(1)
 c.connect()
 print("connecting to broker")
 
-ow = machine.Pin(12)
-ds = ds18x20.DS18X20(onewire.OneWire(ow))
+ds = ds18x20.DS18X20(onewire.OneWire(machine.Pin(12)))
 roms = ds.scan()
 if len(roms) == 0:
     tempFlg = False
@@ -51,13 +51,23 @@ else:
     ds.convert_temp()
     tempFlg = True
 
+ht = dht.DHT22(machine.Pin(13))
+try:
+    ht.measure()
+    dhFlag = True
+except:
+    dhFlag = False
+
 time.sleep(1)           # allow connection setup and temperature read
 if tempFlg:
     tempStr = str(ds.read_temp(roms[0]))
 else:
     tempStr = "none"
 vStr = vin_str(vin,adcScl)
-c.publish("v1/devices/me/telemetry","{'volts' : "+vStr+ ", 'temperature' : "+ tempStr + "}")
+if dhFlag:
+    c.publish("v1/devices/me/telemetry","{'volts' : "+vStr+ ", 'temperature' : "+ tempStr + ", 'temp2' : "+ str(ht.temperature()) + ", 'rh1' : "+ str(ht.humidity()) +"}")
+else:
+    c.publish("v1/devices/me/telemetry","{'volts' : "+vStr+ ", 'temperature' : "+ tempStr + "}")
 time.sleep_ms(100)
 
 time.sleep(1)
