@@ -43,6 +43,20 @@ time.sleep(1)
 c.connect()
 print("connecting to broker")
 
+# level switches on pins 4,5
+p_hi = machine.Pin(4,machine.Pin.IN,machine.Pin.PULL_UP)
+p_lo = machine.Pin(5,machine.Pin.IN,machine.Pin.PULL_UP)
+
+if p_hi.value() == 0:
+    sw_high = '1'
+else:
+    sw_high = '0'
+
+if p_lo.value() == 0:
+    sw_low = '1'
+else:
+    sw_low = '0'
+
 ds = ds18x20.DS18X20(onewire.OneWire(machine.Pin(12)))
 roms = ds.scan()
 if len(roms) == 0:
@@ -59,15 +73,15 @@ except:
     dhFlag = False
 
 time.sleep(1)           # allow connection setup and temperature read
-if tempFlg:
-    tempStr = str(ds.read_temp(roms[0]))
-else:
-    tempStr = "none"
 vStr = vin_str(vin,adcScl)
+message = "{'volts' : "+vStr+ ", 'sw_high' : "+sw_high+", 'sw_low' : "+sw_low
+if tempFlg:
+    message = message + ", 'temperature' : " + str(ds.read_temp(roms[0]))
 if dhFlag:
-    c.publish("v1/devices/me/telemetry","{'volts' : "+vStr+ ", 'temperature' : "+ tempStr + ", 'temp2' : "+ str(ht.temperature()) + ", 'rh1' : "+ str(ht.humidity()) +"}")
-else:
-    c.publish("v1/devices/me/telemetry","{'volts' : "+vStr+ ", 'temperature' : "+ tempStr + "}")
+    message = message + ", 'temp2' : "+ str(ht.temperature()) + ", 'rh1' : "+ str(ht.humidity()) 
+message = message + "}"
+
+c.publish("v1/devices/me/telemetry",message)
 time.sleep_ms(100)
 
 time.sleep(1)
