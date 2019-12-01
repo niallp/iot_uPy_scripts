@@ -43,24 +43,27 @@ time.sleep(1)
 c.connect()
 print("connecting to broker")
 
-# level switches on pins 4,5
-p_hi = machine.Pin(4,machine.Pin.IN,machine.Pin.PULL_UP)
-p_lo = machine.Pin(5,machine.Pin.IN,machine.Pin.PULL_UP)
+if 0:
+    lvlFlg = True
+    # level switches on pins 4,5
+    p_hi = machine.Pin(4,machine.Pin.IN,machine.Pin.PULL_UP)
+    p_lo = machine.Pin(5,machine.Pin.IN,machine.Pin.PULL_UP)
 
-if p_hi.value() == 0:
-    sw_high = '1'
-else:
-    sw_high = '0'
+    if p_hi.value() == 0:
+        sw_high = '1'
+    else:
+        sw_high = '0'
 
-if p_lo.value() == 0:
-    sw_low = '1'
-else:
-    sw_low = '0'
+    if p_lo.value() == 0:
+        sw_low = '1'
+    else:
+        sw_low = '0'
 
 ds = ds18x20.DS18X20(onewire.OneWire(machine.Pin(12)))
 roms = ds.scan()
 if len(roms) == 0:
     tempFlg = False
+    print('DS18x20 not found')
 else:
     ds.convert_temp()
     tempFlg = True
@@ -71,10 +74,13 @@ try:
     dhFlag = True
 except:
     dhFlag = False
+    print('DHT22 not found')
 
 time.sleep(1)           # allow connection setup and temperature read
 vStr = vin_str(vin,adcScl)
-message = "{'volts' : "+vStr+ ", 'sw_high' : "+sw_high+", 'sw_low' : "+sw_low
+message = "{'volts' : "+vStr
+if lvlFlg:
+    message = message + ", 'sw_high' : "+sw_high+", 'sw_low' : "+sw_low
 if tempFlg:
     message = message + ", 'temperature' : " + str(ds.read_temp(roms[0]))
 if dhFlag:
