@@ -43,8 +43,8 @@ time.sleep(1)
 c.connect()
 print("connecting to broker")
 
-if 0:
-    lvlFlg = True
+lvlFlg = False
+if lvlFlg:
     # level switches on pins 4,5
     p_hi = machine.Pin(4,machine.Pin.IN,machine.Pin.PULL_UP)
     p_lo = machine.Pin(5,machine.Pin.IN,machine.Pin.PULL_UP)
@@ -58,6 +58,7 @@ if 0:
         sw_low = '1'
     else:
         sw_low = '0'
+
 
 ds = ds18x20.DS18X20(onewire.OneWire(machine.Pin(12)))
 roms = ds.scan()
