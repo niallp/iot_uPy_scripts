@@ -2,14 +2,14 @@
 
 # should now try strongest ap it knows about, default to balskG
 def do_connect():
-    from machine import Pin
-    con = Pin(13,Pin.OUT)
+#    from machine import Pin
+#    con = Pin(13,Pin.OUT)
     import network
     ap_if = network.WLAN(network.AP_IF)
     ap_if.active(False)
     sta_if = network.WLAN(network.STA_IF)
     if not sta_if.isconnected():
-        con.value(1)
+#        con.value(1)
         bssid = None
         pwd = None
         nets = sta_if.scan()
@@ -32,8 +32,24 @@ def do_connect():
         while not sta_if.isconnected():
             pass
     print('network config:', sta_if.ifconfig())
-    if sta_if.isconnected():
-        con.value(0)
+#    if sta_if.isconnected():
+#        con.value(0)
+
+# needed to force onto Cedar's network ?
+def do_connCedar():
+#    from machine import Pin
+#    con = Pin(13,Pin.OUT)
+    import network
+    ap_if = network.WLAN(network.AP_IF)
+    ap_if.active(False)
+    sta_if = network.WLAN(network.STA_IF)
+    sta_if.connect('NETGEAR12','quicksquash259')
+    while not sta_if.isconnected():
+        pass
+    print('network config:', sta_if.ifconfig())
+#    if sta_if.isconnected():
+#        con.value(0)
+
 
 import esp
 esp.osdebug(None)
