@@ -46,8 +46,11 @@ def dist_str(uart,s_pwr,tx_en):
     tx_en.value(0)
     val_str = uart.readline()
     s_pwr.value(0)
-    vals = [int(s[1:]) for s in val_str.split()]
-    dist = sum(vals) // len(vals)
+    if val_str:
+        vals = [int(s[1:]) for s in val_str.split()]
+        dist = sum(vals) // len(vals)
+    else:
+        dist = None
     return str(dist)
 
 
@@ -71,8 +74,8 @@ nextCount = pubCount
 
 # setup RTC interrupt handler to publish once every period
 rtc = machine.RTC()
-rtc_i = rtc.irq(trigger=machine.RTC.ALARM0, handler=publish_handler, wake=machine.IDLE)
-rtc.alarm(time=60000, repeat=True)
+rtc_i = rtc.irq(trigger=machine.RTC.ALARM0, handler=publish_handler, wake=machine.SLEEP)
+rtc.alarm(time=6000, repeat=True)
 
 #open client
 c = MQTTClient(brdName,"mqtt")
@@ -88,7 +91,7 @@ while True:
     c.publish(brdName+"/dist",dist_str(uart,s_pwr,tx_en))
     nextCount += 1
     while nextCount > pubCount:
-        machine.idle()
+        machine.lightsleep()
 
 utime.sleep(1)
 c.disconnect()
