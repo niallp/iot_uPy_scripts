@@ -43,7 +43,7 @@ time.sleep(1)
 c.connect()
 print("connecting to broker")
 
-lvlFlg = False
+lvlFlg = True
 if lvlFlg:
     # level switches on pins 4,5
     p_hi = machine.Pin(4,machine.Pin.IN,machine.Pin.PULL_UP)

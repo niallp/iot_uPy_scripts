@@ -1,15 +1,15 @@
 # This file is executed on every boot (including wake-boot from deepsleep)
 
 # should now try strongest ap it knows about, default to balskG
-def do_connect():
-#    from machine import Pin
-#    con = Pin(13,Pin.OUT)
+def do_connect(maxRetry):
+    retry = 0
     import network
+    from utime import sleep_ms
     ap_if = network.WLAN(network.AP_IF)
     ap_if.active(False)
     sta_if = network.WLAN(network.STA_IF)
+    sta_if.active(True)
     if not sta_if.isconnected():
-#        con.value(1)
         bssid = None
         pwd = None
         nets = sta_if.scan()
@@ -24,47 +24,28 @@ def do_connect():
             else:
                 print(ssid+" is unknown")
         print('connecting to network '+ssid)
-        sta_if.active(True)
         if bssid == None:
             sta_if.connect(ssid,pwd)
         else:
             sta_if.connect(ssid,pwd,bssid=bssid)
-        while not sta_if.isconnected():
-            pass
+        while (not sta_if.isconnected() and retry < maxRetry):
+            retry = retry + 1
+            sleep_ms(500)
     print('network config:', sta_if.ifconfig())
-#    if sta_if.isconnected():
-#        con.value(0)
-
-# needed to force onto Cedar's network ?
-def do_connCedar():
-#    from machine import Pin
-#    con = Pin(13,Pin.OUT)
-    import network
-    ap_if = network.WLAN(network.AP_IF)
-    ap_if.active(False)
-    sta_if = network.WLAN(network.STA_IF)
-    sta_if.connect('NETGEAR12','quicksquash259')
-    while not sta_if.isconnected():
-        pass
-    print('network config:', sta_if.ifconfig())
-#    if sta_if.isconnected():
-#        con.value(0)
+    return sta_if.isconnected()
 
 
 import esp
 esp.osdebug(None)
 import machine
-cause = machine.reset_cause()
-print("Reset cause: "+str(cause))
-do_connect()
-if (cause != machine.DEEPSLEEP_RESET):
-    # if wasn't deepsleep wakeup, give user a chance to intervene
+dbgSel = machine.Pin(14,machine.Pin.IN,machine.Pin.PULL_UP)
+if (dbgSel.value() == 0):   #cause != machine.DEEPSLEEP_RESET):
+    # give user a chance to intervene
+    do_connect(10)
     import gc
     import webrepl
     webrepl.start()
     gc.collect()
-    from utime import sleep
-    print('Ctrl-C to intervene in autostart of logger')
-    sleep(120)
-
-exec(open('logger.py').read())
+else:
+    if (do_connect(4)):
+        exec(open('logger.py').read())
