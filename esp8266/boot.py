@@ -30,6 +30,7 @@ def do_connect(maxRetry):
             sta_if.connect(ssid,pwd,bssid=bssid)
         while (not sta_if.isconnected() and retry < maxRetry):
             retry = retry + 1
+            print('retry {}'.format(retry))
             sleep_ms(500)
     print('network config:', sta_if.ifconfig())
     return sta_if.isconnected()
@@ -41,11 +42,19 @@ import machine
 dbgSel = machine.Pin(14,machine.Pin.IN,machine.Pin.PULL_UP)
 if (dbgSel.value() == 0):   #cause != machine.DEEPSLEEP_RESET):
     # give user a chance to intervene
+    print('Starting debug mode');
     do_connect(10)
     import gc
     import webrepl
     webrepl.start()
     gc.collect()
 else:
-    if (do_connect(4)):
+    print('Starting logger')
+    if (do_connect(5)):
         exec(open('logger.py').read())
+    else:   # network failed, go back to sleep for 5 minutes
+        print('network failed, sleeping')
+        rtc = machine.RTC()
+        rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
+        rtc.alarm(rtc.ALARM0,300000)
+        machine.deepsleep()
