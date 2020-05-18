@@ -10,13 +10,8 @@ import wipy
 
 from umqtt_simple import MQTTClient
 
-mch = os.uname().machine
-uniq = machine.unique_id()
-if 'WiPy' in mch:
-    brdName = 'wipy'
-else:
-    print("wipy only now")
-    raise SystemExit
+brdName = 'wipy'
+userToken = 'z7Z1HA8P3JUou9N4o51m'  # for thingsboard
 
 # for periodic publishing
 def publish_handler(rtc_o):
@@ -27,13 +22,15 @@ def publish_handler(rtc_o):
 
 # returns temperature in degree C from AD592 as string
 def ad592_str(adc):
-    tempK10 = (adc()*11000000*4) // (3 * 4096 * 4470)  # Kelvin*10
+    milliVolts = (adc()*1494) // 4096
+    tempK10 = (milliVolts*10000) // 4460      # Kelvin*10, 4k46 Rsense
     tempC10 = tempK10 - 2732
     return str(tempC10 // 10) + "." + str(tempC10 % 10)
 
-# account for voltage divider of 115k over 56k on Vinput
-def vin_str(adc):
-    milliVolts = (adc()*171*1100*4) // (3*56*4096)
+# account for voltage divider of 115k over 56k on Vbatt (on expansion board)
+# calibrated against MS8209 DVM, np 16may2020
+def vbatt_str(adc):
+    milliVolts = (adc()*4722) // 4096
     return str(milliVolts // 1000) + "." + str(milliVolts % 1000)
 
 # get a distance reading from maxbotix sensor
@@ -65,11 +62,11 @@ wipy.heartbeat(False)
 p_usr = Pin('GP16', mode=Pin.OUT)
 p_usr.value(1)		# turn off user LED
 
-sw_hi = Pin('GP23', mode=Pin.IN, pull=Pin.PULL_UP)
-sw_lo = Pin('GP24', mode=Pin.IN, pull=Pin.PULL_UP)
+sw_hi = Pin('GP24', mode=Pin.IN, pull=Pin.PULL_UP)
+sw_lo = Pin('GP11', mode=Pin.IN, pull=Pin.PULL_UP)
 
 adc = machine.ADC()
-vin = adc.channel(pin='GP3')
+vbatt = adc.channel(pin='GP3')
 temperature = adc.channel(pin='GP5')
 
 s_pwr = Pin('GP4', mode=Pin.OUT)
@@ -84,25 +81,39 @@ nextCount = pubCount
 # setup RTC interrupt handler to publish once every period
 rtc = machine.RTC()
 rtc_i = rtc.irq(trigger=machine.RTC.ALARM0, handler=publish_handler, wake=machine.SLEEP)
-rtc.alarm(time=6000, repeat=True)
+rtc.alarm(time=60000, repeat=True)
 
-#open client
+# allow wakeup with switch inputs as well (faster response)
+# note only last enabled interrupt active for machine.SLEEP
+# need to go to DEEPSLEEP and restart to permit multiple pins
+sw_hi.irq(handler=publish_handler, trigger=Pin.IRQ_FALLING, wake=machine.SLEEP)
+#sw_lo.irq(handler=publish_handler, trigger=Pin.IRQ_FALLING, wake=machine.SLEEP)
+
+#open client for local access (controller, node-red)
 c = MQTTClient(brdName,"mqtt")
 c.connect()
-print("connecting to broker")
-
+print("connecting to mqtt")
+#open 2nd connection for datalogging in thingsboard
+tb = MQTTClient(brdName,'thingsboard.balsk.ca',keepalive=30,user=userToken,password='')
+tb.connect()
+print("connecting to thingsboard")
 utime.sleep(1)
 
 while True:
+    # buffer this measurement, take time (serial)
+    dist_s = dist_str(uart,s_pwr,tx_en)
     c.publish(brdName+"/iter",str(pubCount))
     c.publish(brdName+"/temp",ad592_str(temperature))
-    c.publish(brdName+"/vin",vin_str(vin))
-    c.publish(brdName+"/dist",dist_str(uart,s_pwr,tx_en))
-    c.publish(brdName+"/sw_hi",sw_str(sw_hi))
-    c.publish(brdName+"/sw_lo",sw_str(sw_lo))
+    c.publish(brdName+"/volts",vbatt_str(vbatt))
+    c.publish(brdName+"/dist",dist_s)
+    c.publish(brdName+"/sw_high",sw_str(sw_hi))
+    c.publish(brdName+"/sw_low",sw_str(sw_lo))
+    tb_msg = "{{'volts' : {}, 'temperature' : {}, 'level' : {}, 'sw_high' : {}, 'sw_low' : {} }}".format(vbatt_str(vbatt),ad592_str(temperature),dist_s,sw_str(sw_hi),sw_str(sw_lo))
+    tb.publish("v1/devices/me/telemetry",tb_msg)
     nextCount += 1
     while nextCount > pubCount:
         machine.lightsleep()
 
 utime.sleep(1)
 c.disconnect()
+tb.disconnect()
