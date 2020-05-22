@@ -40,13 +40,16 @@ def dist_str(uart,s_pwr,tx_en):
     utime.sleep_ms(160)     # boot time
     uart.readline()         # flush bootup message
     tx_en.value(1)
-    utime.sleep_ms(500)     # wait for 3 or so readings
-    tx_en.value(0)
+    utime.sleep_ms(1500)     # wait for some readings
+    #tx_en.value(0)         ... keep free running, noise ?
     val_str = uart.readline()
     s_pwr.value(1)
     if val_str:
         vals = [int(s[1:]) for s in val_str.split()]
-        dist = sum(vals) // len(vals)
+        if len(vals) > 42:
+            dist = sum(vals[:42]) // 42
+        else:
+            dist = sum(vals) // len(vals)
     else:
         dist = None
     return str(dist)
@@ -70,9 +73,9 @@ vbatt = adc.channel(pin='GP3')
 temperature = adc.channel(pin='GP5')
 
 s_pwr = Pin('GP4', mode=Pin.OUT)
-s_pwr.value(1)
+s_pwr.value(1)      # start powered off
 tx_en = Pin('GP10', mode=Pin.OUT)
-tx_en.value(0)
+tx_en.value(1)      # keep enabled now
 uart = machine.UART(1,baudrate=9600,pins=(None,'GP31',None,None))
 
 pubCount = 0

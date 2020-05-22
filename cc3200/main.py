@@ -9,16 +9,19 @@ import micropython
 
 autoconfig.wlan()
 
-print('SD: preparing SD card')
-if expansionboard.initialize_sd_card():
-    main = upathlib.Path('/sd/main.py')
-    print('SD: mounted to /sd')
-    print('SD: execute {}...'.format(main))
-    if main.exists():
-        execfile(str(main))
+from machine import Pin
+usr_sw = Pin('GP17', mode=Pin.IN, pull=Pin.PULL_UP)
+if usr_sw.value() == 0:     # press usr to stop logger autoexecute
+    print('SD: preparing SD card')
+    if expansionboard.initialize_sd_card():
+        main = upathlib.Path('/sd/main.py')
+        print('SD: mounted to /sd')
+        print('SD: execute {}...'.format(main))
+        if main.exists():
+            execfile(str(main))
+        else:
+            print('SD: no file /sd/main.py found!')
     else:
-        print('SD: no file /sd/main.py found!')
+        print('SD: no card found!')
 else:
-    print('SD: no card found!')
-
-
+    execfile('logger.py')
