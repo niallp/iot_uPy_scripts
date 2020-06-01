@@ -84,7 +84,7 @@ nextCount = pubCount
 # setup RTC interrupt handler to publish once every period
 rtc = machine.RTC()
 rtc_i = rtc.irq(trigger=machine.RTC.ALARM0, handler=publish_handler, wake=machine.SLEEP)
-rtc.alarm(time=60000, repeat=True)
+rtc.alarm(time=300000, repeat=True)
 
 # allow wakeup with switch inputs as well (faster response)
 # note only last enabled interrupt active for machine.SLEEP
@@ -94,15 +94,15 @@ sw_hi.irq(handler=publish_handler, trigger=Pin.IRQ_FALLING, wake=machine.SLEEP)
 
 #open client for local access (controller, node-red)
 c = MQTTClient(brdName,"mqtt")
-c.connect()
-print("connecting to mqtt")
 #open 2nd connection for datalogging in thingsboard
 tb = MQTTClient(brdName,'thingsboard.balsk.ca',keepalive=30,user=userToken,password='')
-tb.connect()
-print("connecting to thingsboard")
 utime.sleep(1)
 
 while True:
+    c.connect()
+    print("connecting to mqtt")
+    tb.connect()
+    print("connecting to thingsboard")
     # buffer this measurement, take time (serial)
     dist_s = dist_str(uart,s_pwr,tx_en)
     c.publish(brdName+"/iter",str(pubCount))
@@ -114,9 +114,9 @@ while True:
     tb_msg = "{{'volts' : {}, 'temperature' : {}, 'level' : {}, 'sw_high' : {}, 'sw_low' : {} }}".format(vbatt_str(vbatt),ad592_str(temperature),dist_s,sw_str(sw_hi),sw_str(sw_lo))
     tb.publish("v1/devices/me/telemetry",tb_msg)
     nextCount += 1
+    c.disconnect()
+    tb.disconnect()
     while nextCount > pubCount:
         machine.lightsleep()
 
-utime.sleep(1)
-c.disconnect()
-tb.disconnect()
+print("Exited logger")
