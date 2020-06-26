@@ -18,7 +18,7 @@ import dht
 from boardCfg import brdName
 from boardCfg import adcScl
 from boardCfg import userToken
-from boardCfg import mqttHost
+from netConfig import mqttHost
 
 # account for voltage divider of 100k over 22k on Vinput: tweaked to calibrate
 def vin_str(adc,scl):

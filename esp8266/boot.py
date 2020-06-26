@@ -14,7 +14,7 @@ def do_connect(maxRetry):
         pwd = None
         nets = sta_if.scan()
         nets.sort(key=lambda net: net[3], reverse=True)     # strongest first
-        from boardCfg import known_nets
+        from netConfig import known_nets
         for net in nets:
             ssid = net[0].decode('utf-8')
             if ssid in known_nets:
