@@ -19,11 +19,14 @@ def do_connect(maxRetry):
             ssid = net[0].decode('utf-8')
             if ssid in known_nets:
                 bssid = net[1]
-                pwd = known_nets[ssid]['pwd']
-                break
+                if bssid == b'\xc0J\x00,\xb1\x8d':
+                    print('skip bssid '+str(bssid))
+                else:
+                    pwd = known_nets[ssid]['pwd']
+                    break
             else:
                 print(ssid+" is unknown")
-        print('connecting to network '+ssid)
+        print('connecting to network '+ssid+' BSSID: '+str(bssid))
         if bssid == None:
             sta_if.connect(ssid,pwd)
         else:
@@ -43,14 +46,14 @@ dbgSel = machine.Pin(14,machine.Pin.IN,machine.Pin.PULL_UP)
 if (dbgSel.value() == 0):   #cause != machine.DEEPSLEEP_RESET):
     # give user a chance to intervene
     print('Starting debug mode');
-    do_connect(10)
+    do_connect(99)
     import gc
     import webrepl
     webrepl.start()
     gc.collect()
 else:
     print('Starting logger')
-    if (do_connect(5)):
+    if (do_connect(10)):
         exec(open('logger.py').read())
     else:   # network failed, go back to sleep for 5 minutes
         print('network failed, sleeping')
