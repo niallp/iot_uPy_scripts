@@ -9,10 +9,12 @@ def relay_message(client, userdata, message):
     print("topic=",message.topic,"msg=",msg_str)
     if msg_str == "0" or msg_str == "off":
         msg_str = "off"
+        msg = 0
     else:
         msg_str = "on"
+        msg = 1
     client.publish("eastern/relayEcho",msg_str)
-    clientTB.publish("v1/devices/me/telemetry",'{"relay" : '+msg_str+'}')
+    clientTB.publish("v1/devices/me/telemetry",'{"relay" : '+str(msg)+'}')
     relay_ctl(msg_str == "on")
 
 def relay_ctl(flag):
