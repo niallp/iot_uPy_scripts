@@ -13,7 +13,7 @@ def relay_message(client, userdata, message):
     else:
         msg_str = "on"
         msg = 1
-    client.publish("eastern/relayEcho",msg_str)
+    client.publish("cabin/relayEcho",msg_str)
     clientTB.publish("v1/devices/me/telemetry",'{"relay" : '+str(msg)+'}')
     relay_ctl(msg_str == "on")
 
@@ -27,10 +27,10 @@ def relay_ctl(flag):
 
 client = mqtt.Client("BBB")
 client.on_message = relay_message
-client.connect("mqtt")
+client.connect("mqtt-east.balsk")
 
 client.loop_start()
-client.subscribe("eastern/relay")
+client.subscribe("cabin/relay")
 
 GPIO.setup("P9_12", GPIO.OUT)
 GPIO.output("P9_12", GPIO.HIGH)
@@ -38,7 +38,7 @@ GPIO.output("P9_12", GPIO.HIGH)
 # for thingsboard logging
 clientTB = mqtt.Client("BBBtb")
 clientTB.username_pw_set(username="7k9nGbcBYONw8PehZb3k",password="")
-clientTB.connect("thingsboard")
+clientTB.connect("thingsboard.balsk")
 ADC.setup()
 
 try:
@@ -49,7 +49,7 @@ try:
         tbMsg = "{{\"battery\" : {:6.3f}, \"batt_half\" : {:6.3f}, \"batt_one\" : {:5.3f}}}".format(batt,batt_half,batt_1)
         clientTB.publish("v1/devices/me/telemetry",tbMsg)
         msg = "{:6.3f}".format(batt)
-        client.publish("eastern/voltage",msg)
+        client.publish("cabin/voltage",msg)
         time.sleep(60)
 except KeyboardInterrupt:
     GPIO.output("P9_12",GPIO.HIGH)
