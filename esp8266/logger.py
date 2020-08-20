@@ -38,11 +38,17 @@ rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
 rtc.alarm(rtc.ALARM0,60000)
 
 #open client
-c = MQTTClient(brdName,mqttHost,keepalive=30,user=userToken,password='')
-# extra delay to allow network to stabilize
-time.sleep(1)           
-c.connect()
-print("connecting to broker")
+try:
+    c = MQTTClient(brdName,mqttHost,keepalive=30,user=userToken,password='')
+    # extra delay to allow network to stabilize
+    time.sleep(1)           
+    c.connect()
+    print("connecting to broker")
+    brokerFlg = True
+except OSError:
+    print("failure to connect to broker")
+    brokerFlg = False
+
 
 
 lvlFlg = True
@@ -90,21 +96,25 @@ if dhFlag:
     message = message + ", 'temp2' : "+ str(ht.temperature()) + ", 'rh1' : "+ str(ht.humidity()) 
 message = message + "}"
 
-c.publish("v1/devices/me/telemetry",message)
+if brokerFlg:
+    c.publish("v1/devices/me/telemetry",message)
 
-time.sleep(1)
-c.disconnect()
+    time.sleep(1)
+    c.disconnect()
 
 if mqttHost2 != None:
-    c2 = MQTTClient(brdName,mqttHost2,keepalive=30)
-    c2.connect()
-    print("connecting to control broker")
-    c2.publish("cabin/node/voltage",vStr)
-    if lvlFlg:
-        c2.publish("cabin/node/sw_hi",sw_high)
-        c2.publish("cabin/node/sw_lo",sw_low)
-    time.sleep(1)
-    c2.disconnect()
+    try:
+        c2 = MQTTClient(brdName,mqttHost2,keepalive=30)
+        c2.connect()
+        print("connecting to control broker")
+        c2.publish("cabin/node/voltage",vStr)
+        if lvlFlg:
+            c2.publish("cabin/node/sw_hi",sw_high)
+            c2.publish("cabin/node/sw_lo",sw_low)
+        time.sleep(1)
+        c2.disconnect()
+    except OSError:
+        print("control broker failure")
 
 print('back to sleep')
 machine.deepsleep()     # back to sleep
