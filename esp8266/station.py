@@ -17,6 +17,8 @@ from boardCfg import userToken
 from netConfig import mqttHost
 from boardCfg import mqttHost2
 
+import sht30
+
 # account for voltage divider of 100k over 22k on Vinput: tweaked to calibrate
 def vin_str(adc,scl):
     acc = 0
@@ -32,6 +34,9 @@ vin = adc.read
 rtc = machine.RTC()
 rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
 rtc.alarm(rtc.ALARM0,60000)
+
+sense1 = sht30.SHT30()
+sense2 = sht30.SHT30(i2c_address=sht30.ALTERNATE_I2C_ADDRESS)
 
 #open client
 try:
@@ -49,6 +54,12 @@ except OSError:
 time.sleep(1)           # allow connection setup and temperature read
 vStr = vin_str(vin,adcScl)
 message = "{'volts' : "+vStr
+if sense1.is_present():
+    t1,rh1 = sense1.measure()
+    message = message + ", 'temperature' : " + str(t1) + ", 'rh1' : " + str(rh1)
+if sense2.is_present():
+    t2,rh2 = sense2.measure()
+    message = message + ", 'temp2' : " + str(t2) + ", 'rh2' : " + str(rh2)
 message = message + "}"
 
 if brokerFlg:
