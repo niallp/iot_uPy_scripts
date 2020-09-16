@@ -99,23 +99,27 @@ tb = MQTTClient(brdName,'thingsboard.balsk.ca',keepalive=30,user=userToken,passw
 utime.sleep(1)
 
 while True:
-    c.connect()
-    print("connecting to mqtt")
-    tb.connect()
-    print("connecting to thingsboard")
-    # buffer this measurement, take time (serial)
-    dist_s = dist_str(uart,s_pwr,tx_en)
-    c.publish(brdName+"/iter",str(pubCount))
-    c.publish(brdName+"/temp",ad592_str(temperature))
-    c.publish(brdName+"/volts",vbatt_str(vbatt))
-    c.publish(brdName+"/dist",dist_s)
-    c.publish(brdName+"/sw_high",sw_str(sw_hi))
-    c.publish(brdName+"/sw_low",sw_str(sw_lo))
-    tb_msg = "{{'volts' : {}, 'temperature' : {}, 'level' : {}, 'sw_high' : {}, 'sw_low' : {} }}".format(vbatt_str(vbatt),ad592_str(temperature),dist_s,sw_str(sw_hi),sw_str(sw_lo))
-    tb.publish("v1/devices/me/telemetry",tb_msg)
-    nextCount += 1
-    c.disconnect()
-    tb.disconnect()
+    try:
+        c.connect()
+        print("connecting to mqtt")
+        tb.connect()
+        print("connecting to thingsboard")
+        # buffer this measurement, take time (serial)
+        dist_s = dist_str(uart,s_pwr,tx_en)
+        c.publish(brdName+"/iter",str(pubCount))
+        c.publish(brdName+"/temp",ad592_str(temperature))
+        c.publish(brdName+"/volts",vbatt_str(vbatt))
+        c.publish(brdName+"/dist",dist_s)
+        c.publish(brdName+"/sw_high",sw_str(sw_hi))
+        c.publish(brdName+"/sw_low",sw_str(sw_lo))
+        tb_msg = "{{'volts' : {}, 'temperature' : {}, 'level' : {}, 'sw_high' : {}, 'sw_low' : {} }}".format(vbatt_str(vbatt),ad592_str(temperature),dist_s,sw_str(sw_hi),sw_str(sw_lo))
+        tb.publish("v1/devices/me/telemetry",tb_msg)
+        nextCount += 1
+        c.disconnect()
+        tb.disconnect()
+    except OSError:
+        utime.sleep(30)
+        machine.reset()
     while nextCount > pubCount:
         machine.lightsleep()
 
