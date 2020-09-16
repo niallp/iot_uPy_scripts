@@ -52,12 +52,12 @@ if (dbgSel.value() == 0):   #cause != machine.DEEPSLEEP_RESET):
     webrepl.start()
     gc.collect()
 else:
-    print('Starting logger')
-    if (do_connect(10)):
-        exec(open('logger.py').read())
-    else:   # network failed, go back to sleep for 5 minutes
+    if (not do_connect(10)):   # network failed, go back to sleep for 5 minutes
         print('network failed, sleeping')
         rtc = machine.RTC()
         rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
         rtc.alarm(rtc.ALARM0,300000)
         machine.deepsleep()
+    else:
+        print('Starting logger')
+        #exec(open('logger.py').read())

@@ -1,2 +1,1 @@
-# do nothing
-print("Finished booting ...")
+station.py
