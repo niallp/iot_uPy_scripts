@@ -22,20 +22,31 @@ from netConfig import mqttHost
 from boardCfg import mqttHost2
 
 # account for voltage divider of 100k over 22k on Vinput: tweaked to calibrate
-def vin_str(adc,scl):
+def vin_mV(adc,scl):
     acc = 0
     for r in range(10):     # average over 10 in case of noise
         acc += adc()
     milliVolts = ((acc-25)*scl) // 1024
+    return milliVolts
+
+def vin_str(milliVolts):
     return str(milliVolts // 1000) + "." + "{0:0>3}".format(milliVolts % 1000) 
 
 #setup 
 adc = machine.ADC(0)
-vin = adc.read
+milliVolts = vin_mV(adc.read,adcScl)    # want to sleep longer if voltage is low
+sleepTime = 60000
+if milliVolts < 3700:
+    sleepTime = sleepTime*10
+if milliVolts < 3400:
+    sleepTime = sleepTime*3
+if milliVolts < 3200:
+    sleepTime = sleepTime*4     # around 2 hours if very low battery
+
 # configure wakeup
 rtc = machine.RTC()
 rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
-rtc.alarm(rtc.ALARM0,60000)
+rtc.alarm(rtc.ALARM0,sleepTime)
 
 #open client
 try:
@@ -86,7 +97,8 @@ except:
     print('DHT22 not found')
 
 time.sleep(1)           # allow connection setup and temperature read
-vStr = vin_str(vin,adcScl)
+
+vStr = vin_str(milliVolts)
 message = "{'volts' : "+vStr
 if lvlFlg:
     message = message + ", 'sw_high' : "+sw_high+", 'sw_low' : "+sw_low
@@ -116,5 +128,5 @@ if mqttHost2 != None:
     except OSError:
         print("control broker failure")
 
-print('back to sleep')
+print('back to sleep: '+ str(sleepTime))
 machine.deepsleep()     # back to sleep
