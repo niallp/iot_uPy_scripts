@@ -20,6 +20,7 @@ from boardCfg import adcScl
 from boardCfg import userToken
 from netConfig import mqttHost
 from boardCfg import mqttHost2
+from boardCfg import mqttTopic2
 
 # account for voltage divider of 100k over 22k on Vinput: tweaked to calibrate
 def vin_mV(adc,scl):
@@ -119,10 +120,10 @@ if mqttHost2 != None:
         c2 = MQTTClient(brdName,mqttHost2,keepalive=30)
         c2.connect()
         print("connecting to control broker")
-        c2.publish("cabin/node/voltage",vStr)
+        c2.publish(mqttTopic2+"voltage",vStr)
         if lvlFlg:
-            c2.publish("cabin/node/sw_hi",sw_high)
-            c2.publish("cabin/node/sw_lo",sw_low)
+            c2.publish(mqttTopic2+"sw_hi",sw_high)
+            c2.publish(mqttTopic2+"sw_lo",sw_low)
         time.sleep(1)
         c2.disconnect()
     except OSError:
@@ -130,3 +131,4 @@ if mqttHost2 != None:
 
 print('back to sleep: '+ str(sleepTime))
 machine.deepsleep()     # back to sleep
+
