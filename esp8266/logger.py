@@ -21,6 +21,8 @@ from boardCfg import userToken
 from netConfig import mqttHost
 from boardCfg import mqttHost2
 from boardCfg import mqttTopic2
+from boardCfg import highPin
+from boardCfg import lowPin
 
 # account for voltage divider of 100k over 22k on Vinput: tweaked to calibrate
 def vin_mV(adc,scl):
@@ -32,6 +34,11 @@ def vin_mV(adc,scl):
 
 def vin_str(milliVolts):
     return str(milliVolts // 1000) + "." + "{0:0>3}".format(milliVolts % 1000) 
+
+def pin_str(gpio):
+    # default switches pulled high so active low
+    pin = machine.Pin(gpio,machine.Pin.IN,machine.Pin.PULL_UP)
+    return '1' if pin.value() == 0 else '0'
 
 #setup 
 adc = machine.ADC(0)
@@ -61,25 +68,6 @@ except OSError:
     print("failure to connect to broker")
     brokerFlg = False
 
-
-
-lvlFlg = True
-if lvlFlg:
-    # level switches on pins 4,5
-    p_hi = machine.Pin(4,machine.Pin.IN,machine.Pin.PULL_UP)
-    p_lo = machine.Pin(5,machine.Pin.IN,machine.Pin.PULL_UP)
-
-    if p_hi.value() == 0:
-        sw_high = '1'
-    else:
-        sw_high = '0'
-
-    if p_lo.value() == 0:
-        sw_low = '1'
-    else:
-        sw_low = '0'
-
-
 ds = ds18x20.DS18X20(onewire.OneWire(machine.Pin(12)))
 roms = ds.scan()
 if len(roms) == 0:
@@ -101,8 +89,10 @@ time.sleep(1)           # allow connection setup and temperature read
 
 vStr = vin_str(milliVolts)
 message = "{'volts' : "+vStr
-if lvlFlg:
-    message = message + ", 'sw_high' : "+sw_high+", 'sw_low' : "+sw_low
+if highPin is not None:
+    message = message + ", 'sw_high' : "+pin_str(highPin)
+if lowPin is not None:
+    message = message + ", 'sw_low' : "+pin_str(lowPin)
 if tempFlg:
     message = message + ", 'temperature' : " + str(ds.read_temp(roms[0]))
 if dhFlag:
