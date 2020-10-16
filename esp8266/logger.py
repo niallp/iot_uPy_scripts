@@ -119,9 +119,10 @@ if mqttHost2 != None:
         c2.connect()
         print("connecting to control broker")
         c2.publish(mqttTopic2+"voltage",vStr)
-        if lvlFlg:
-            c2.publish(mqttTopic2+"sw_hi",sw_high)
-            c2.publish(mqttTopic2+"sw_lo",sw_low)
+        if highPin is not None:
+            c2.publish(mqttTopic2+"sw_hi",pin_str(highPin))
+        if lowPin is not None:
+            c2.publish(mqttTopic2+"sw_lo",pin_str(lowPin))
         time.sleep(1)
         c2.disconnect()
     except OSError:
