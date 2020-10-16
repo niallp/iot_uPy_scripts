@@ -11,9 +11,6 @@ import os
 
 from umqtt_simple import MQTTClient
 
-import onewire
-import ds18x20
-import dht
 
 from boardCfg import brdName
 from boardCfg import adcScl
@@ -23,6 +20,8 @@ from boardCfg import mqttHost2
 from boardCfg import mqttTopic2
 from boardCfg import highPin
 from boardCfg import lowPin
+from boardCfg import oneWirePin
+from boardCfg import dhtPin
 
 # account for voltage divider of 100k over 22k on Vinput: tweaked to calibrate
 def vin_mV(adc,scl):
@@ -68,22 +67,31 @@ except OSError:
     print("failure to connect to broker")
     brokerFlg = False
 
-ds = ds18x20.DS18X20(onewire.OneWire(machine.Pin(12)))
-roms = ds.scan()
-if len(roms) == 0:
-    tempFlg = False
-    print('DS18x20 not found')
+if oneWirePin is not None:
+    import onewire
+    import ds18x20
+    ds = ds18x20.DS18X20(onewire.OneWire(machine.Pin(oneWirePin)))
+    roms = ds.scan()
+    if len(roms) == 0:
+        tempFlg = False
+        print('DS18x20 not found')
+    else:
+        ds.convert_temp()
+        tempFlg = True
 else:
-    ds.convert_temp()
-    tempFlg = True
+    tempFlg = False
 
-ht = dht.DHT22(machine.Pin(13))
-try:
-    ht.measure()
-    dhFlag = True
-except:
+if dhtPin is not None:
+    import dht
+    ht = dht.DHT22(machine.Pin(dhtPin))
+    try:
+        ht.measure()
+        dhFlag = True
+    except:
+        dhFlag = False
+        print('DHT22 not found')
+else:
     dhFlag = False
-    print('DHT22 not found')
 
 time.sleep(1)           # allow connection setup and temperature read
 
