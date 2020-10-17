@@ -7,3 +7,4 @@ highPin = None
 lowPin = None
 oneWirePin = 12
 dhtPin = None
+sht30Pins = (4, 5)

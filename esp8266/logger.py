@@ -22,6 +22,7 @@ from boardCfg import highPin
 from boardCfg import lowPin
 from boardCfg import oneWirePin
 from boardCfg import dhtPin
+from boardCfg import sht30Pins
 
 # account for voltage divider of 100k over 22k on Vinput: tweaked to calibrate
 def vin_mV(adc,scl):
@@ -93,6 +94,18 @@ if dhtPin is not None:
 else:
     dhFlag = False
 
+if sht30Pins is not None:
+    import sht30
+    sda, scl = sht30Pins
+    sense = sht30.SHT30(scl_pin=scl, sda_pin=sda)
+    if not sense.is_present():
+        sense = sht30.SHT30(scl_pin=scl, sda_pin=sda, i2c_address=sht30.ALTERNATE_I2C_ADDRESS)
+    if sense.is_present():
+        sht30Flag = True
+    else:
+        sht30Flag = False
+
+
 time.sleep(1)           # allow connection setup and temperature read
 
 vStr = vin_str(milliVolts)
@@ -103,8 +116,12 @@ if lowPin is not None:
     message = message + ", 'sw_low' : "+pin_str(lowPin)
 if tempFlg:
     message = message + ", 'temperature' : " + str(ds.read_temp(roms[0]))
+# only expect one of following RH sensors installed
 if dhFlag:
     message = message + ", 'temp2' : "+ str(ht.temperature()) + ", 'rh1' : "+ str(ht.humidity()) 
+if sht30Flag:
+    t2, rh = sense.measure()
+    message = message + ", 'temp2' : "+ str(t2) + ", 'rh1' : "+ str(rh) 
 message = message + "}"
 
 if brokerFlg:
