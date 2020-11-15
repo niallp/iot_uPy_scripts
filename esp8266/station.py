@@ -1,8 +1,4 @@
-# basic data logger using WiPy
-# fork for esp2866 modules
-# Niall Parker, 7apr2016
-# adapt for Thingsboard demo
-# isolate board specific values to boardCfg.py
+# datalogger and station controller, Niall Parker 10nov2020
 
 import socket
 import time
@@ -20,23 +16,34 @@ from boardCfg import mqttHost2
 import sht30
 
 # account for voltage divider of 100k over 22k on Vinput: tweaked to calibrate
-def vin_str(adc,scl):
+def vin_mV(adc,scl):
     acc = 0
     for r in range(10):     # average over 10 in case of noise
         acc += adc()
     milliVolts = ((acc-25)*scl) // 1024
+    return milliVolts
+
+def vin_str(milliVolts):
     return str(milliVolts // 1000) + "." + "{0:0>3}".format(milliVolts % 1000) 
 
 #setup 
 adc = machine.ADC(0)
-vin = adc.read
+milliVolts = vin_mV(adc.read,adcScl)
+sleepTime = 20000
+if milliVolts < 11500:  #ie station battery low
+    print("low battery, monitor only")
+    ctlFlg = False
+    sleepTime = 120000
 # configure wakeup
 rtc = machine.RTC()
 rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
-rtc.alarm(rtc.ALARM0,60000)
+rtc.alarm(rtc.ALARM0,sleepTime)
 
 sense1 = sht30.SHT30()
 sense2 = sht30.SHT30(i2c_address=sht30.ALTERNATE_I2C_ADDRESS)
+
+relay = machine.Pin(15,machine.Pin.OUT)
+relay.value(0)
 
 #open client
 try:
@@ -52,7 +59,7 @@ except OSError:
 
 
 time.sleep(1)           # allow connection setup and temperature read
-vStr = vin_str(vin,adcScl)
+vStr = vin_str(vin_mV(adc.read,adcScl))
 message = "{'volts' : "+vStr
 if sense1.is_present():
     t1,rh1 = sense1.measure()
@@ -69,5 +76,6 @@ if brokerFlg:
 
 
 print('back to sleep')
+relay.value(0)
 machine.deepsleep()     # back to sleep
 
