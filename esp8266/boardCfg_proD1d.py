@@ -1,5 +1,10 @@
 brdName = 'proD1d'
 userToken = 'omB1qkUf3Nqz9CbHhZBU'
-adcScl = 442
+adcScl = 1589
 mqttHost2 = None
 mqttTopic2 = None
+highPin = None
+lowPin = None
+oneWirePin = None
+dhtPin = None
+sht30Pins = None
