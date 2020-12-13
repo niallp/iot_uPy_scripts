@@ -104,6 +104,8 @@ if sht30Pins is not None:
         sht30Flag = True
     else:
         sht30Flag = False
+else:
+    sht30Flag = False
 
 
 time.sleep(1)           # allow connection setup and temperature read
