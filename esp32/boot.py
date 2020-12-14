@@ -9,6 +9,6 @@ os.dupterm(uart)
 pycom.rgbled(0)
 
 if machine.reset_cause() != machine.SOFT_RESET:
-    from boardCfg import known_nets
+    from netConfig import known_nets
     import wifi 
     wifi.connect(known_nets)

@@ -16,6 +16,7 @@ from pycom import rgbled
 
 from boardCfg import brdName   # name and userID
 from boardCfg import userToken
+from netConfig import mqttHost
 
 import gc
 
@@ -34,7 +35,7 @@ l76 = L76GNSS(py, timeout=30)
 chrono = Timer.Chrono()
 chrono.start()
 # mqtt via thingsboard
-client = MQTTClient(brdName,"thingsboard",keepalive=30,user=userToken,password='')
+client = MQTTClient(brdName,mqttHost,keepalive=30,user=userToken,password='')
 client.connect()
 #sd = SD()
 #os.mount(sd, '/sd')
@@ -46,8 +47,11 @@ while (True):
         rgbled(0x0f0000)
     else:
         rgbled(0x000f00)
-    print("{} - {} - {}".format(coord, rtc.now(), gc.mem_free()))
+    print("{} - {} - {}".format(coord, rtc.now(), py.read_battery_voltage()))
+    mesg = "{'volts' : "+str(py.read_battery_voltage())
     if coord != (None,None):
-        client.publish(topic="v1/devices/me/telemetry",msg="{'latitude' : "+str(coord[0])+ ", 'longitude' : "+str(coord[1]) + "}")
+        mesg += ",'latitude' : "+str(coord[0])+ ", 'longitude' : "+str(coord[1])
+    mesg += "}"
+    client.publish(topic="v1/devices/me/telemetry",msg=mesg)
     rgbled(0)
     time.sleep(5)
