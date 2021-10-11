@@ -1,6 +1,6 @@
-brdName = 'proD1f'
-userToken = 'Lm3zlS04OSp6qMd1m12O'
-adcScl = 442
+brdName = 'minD1b'
+userToken = 'sjXQW0H6ku5OP2LkLudY'
+adcScl = 435
 mqttHost2 = None
 mqttTopic2 = None
 highPin = None

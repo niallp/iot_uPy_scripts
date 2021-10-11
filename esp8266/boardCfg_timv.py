@@ -1,10 +1,10 @@
-brdName = 'proD1f'
-userToken = 'Lm3zlS04OSp6qMd1m12O'
+brdName = 'timv'
+userToken = 'XRAUz47bNVdUhiucUNbw'
 adcScl = 442
 mqttHost2 = None
 mqttTopic2 = None
 highPin = None
 lowPin = None
-oneWirePin = None
+oneWirePin = 12
 dhtPin = None
-sht30Pins = (4, 5)
+sht30Pins = None
