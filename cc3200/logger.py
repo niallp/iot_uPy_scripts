@@ -84,12 +84,14 @@ nextCount = pubCount
 # setup RTC interrupt handler to publish once every period
 rtc = machine.RTC()
 rtc_i = rtc.irq(trigger=machine.RTC.ALARM0, handler=publish_handler, wake=machine.SLEEP)
-rtc.alarm(time=300000, repeat=True)
+rtc.alarm(time=30000, repeat=True)
 
 # allow wakeup with switch inputs as well (faster response)
 # note only last enabled interrupt active for machine.SLEEP
 # need to go to DEEPSLEEP and restart to permit multiple pins
-sw_hi.irq(handler=publish_handler, trigger=Pin.IRQ_FALLING, wake=machine.SLEEP)
+# interrupts not used 11oct2021: too many false triggers ?
+# poll faster instead, every 30 seconds
+#sw_hi.irq(handler=publish_handler, trigger=Pin.IRQ_FALLING, wake=machine.SLEEP)
 #sw_lo.irq(handler=publish_handler, trigger=Pin.IRQ_FALLING, wake=machine.SLEEP)
 
 #open client for local access (controller, node-red)
