@@ -23,21 +23,14 @@ def vin_mV(adc,scl):
     milliVolts = ((acc-25)*scl) // 1024
     return milliVolts
 
-def vin_str(milliVolts):
-    return str(milliVolts // 1000) + "." + "{0:0>3}".format(milliVolts % 1000) 
+def milli_str(milli):
+    return str(milli // 1000) + "." + "{0:0>3}".format(milli % 1000) 
 
 #setup 
 adc = machine.ADC(0)
 milliVolts = vin_mV(adc.read,adcScl)
 sleepTime = 20000
-if milliVolts < 11500:  #ie station battery low
-    print("low battery, monitor only")
-    ctlFlg = False
-    sleepTime = 120000
-# configure wakeup
-rtc = machine.RTC()
-rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
-rtc.alarm(rtc.ALARM0,sleepTime)
+ctlFlg = True
 
 sense1 = sht30.SHT30()
 sense2 = sht30.SHT30(i2c_address=sht30.ALTERNATE_I2C_ADDRESS)
@@ -45,37 +38,53 @@ sense2 = sht30.SHT30(i2c_address=sht30.ALTERNATE_I2C_ADDRESS)
 relay = machine.Pin(15,machine.Pin.OUT)
 relay.value(0)
 
-#open client
-try:
-    c = MQTTClient(brdName,mqttHost,keepalive=30,user=userToken,password='')
-    # extra delay to allow network to stabilize
-    time.sleep(1)           
-    c.connect()
-    print("connecting to broker")
-    brokerFlg = True
-except OSError:
-    print("failure to connect to broker")
-    brokerFlg = False
+while ctlFlg:
+    if milliVolts < 6500:  #ie station battery low
+        print("low battery, monitor only")
+        ctlFlg = False
+        sleepTime = 120000
+    # configure wakeup
+    rtc = machine.RTC()
+    rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
+    rtc.alarm(rtc.ALARM0,sleepTime)
 
 
-time.sleep(1)           # allow connection setup and temperature read
-vStr = vin_str(vin_mV(adc.read,adcScl))
-message = "{'volts' : "+vStr
-if sense1.is_present():
-    t1,rh1 = sense1.measure()
-    message = message + ", 'temperature' : " + str(t1) + ", 'rh1' : " + str(rh1)
-if sense2.is_present():
-    t2,rh2 = sense2.measure()
-    message = message + ", 'temp2' : " + str(t2) + ", 'rh2' : " + str(rh2)
-message = message + "}"
-
-if brokerFlg:
-    c.publish("v1/devices/me/telemetry",message)
-    time.sleep(1)
-    c.disconnect()
+    #open client
+    try:
+        c = MQTTClient(brdName,mqttHost,keepalive=30,user=userToken,password='')
+        # extra delay to allow network to stabilize
+        time.sleep(1)           
+        c.connect()
+        print("connecting to broker")
+        brokerFlg = True
+    except OSError:
+        print("failure to connect to broker")
+        brokerFlg = False
+        ctlFlg = False
 
 
-print('back to sleep')
-relay.value(0)
-machine.deepsleep()     # back to sleep
+    time.sleep(1)           # allow connection setup and temperature read
+    milliVolts = vin_mV(adc.read,adcScl)
+    vStr = milli_str(milliVolts)
+    message = "{'volts' : "+vStr
+    if sense1.is_present():
+        t1,rh1 = sense1.measure()
+        message = message + ", 'temperature' : " + str(t1) + ", 'rh1' : " + str(rh1)
+    if sense2.is_present():
+        t2,rh2 = sense2.measure()
+        message = message + ", 'temp2' : " + str(t2) + ", 'rh2' : " + str(rh2)
+    message = message + "}"
 
+    if brokerFlg:
+        c.publish("v1/devices/me/telemetry",message)
+        time.sleep(1)
+        c.disconnect()
+
+
+    if not ctlFlg:
+        print('back to sleep: '+milli_str(sleepTime))
+        relay.value(0)
+        machine.deepsleep()     # back to sleep
+    else:
+        print('awake but waiting: '+milli_str(sleepTime))
+        time.sleep(sleepTime/1000)
