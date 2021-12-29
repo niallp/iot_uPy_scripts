@@ -1,0 +1,10 @@
+brdName = 'proD1g'
+userToken = 'C4AXfQe3jhzk156DYx0f'
+adcScl = 442
+mqttHost2 = None
+mqttTopic2 = None
+highPin = None
+lowPin = None
+oneWirePin = 12
+dhtPin = 13
+sht30Pins = None
