@@ -32,8 +32,8 @@ def vin_mV(adc,scl):
     milliVolts = ((acc-25)*scl) // 1024
     return milliVolts
 
-def vin_str(milliVolts):
-    return str(milliVolts // 1000) + "." + "{0:0>3}".format(milliVolts % 1000) 
+def milli_str(millis):
+    return str(millis // 1000) + "." + "{0:0>3}".format(millis % 1000) 
 
 def pin_str(gpio):
     # default switches pulled high so active low
@@ -50,11 +50,6 @@ if milliVolts < 3400:
     sleepTime = sleepTime*3
 if milliVolts < 3200:
     sleepTime = sleepTime*4     # around 2 hours if very low battery
-
-# configure wakeup
-rtc = machine.RTC()
-rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
-rtc.alarm(rtc.ALARM0,sleepTime)
 
 #open client
 try:
@@ -110,7 +105,7 @@ else:
 
 time.sleep(1)           # allow connection setup and temperature read
 
-vStr = vin_str(milliVolts)
+vStr = milli_str(milliVolts)
 message = "{'volts' : "+vStr
 if highPin is not None:
     message = message + ", 'sw_high' : "+pin_str(highPin)
@@ -147,6 +142,6 @@ if mqttHost2 != None:
     except OSError:
         print("control broker failure")
 
-print('back to sleep: '+ str(sleepTime))
-machine.deepsleep()     # back to sleep
+print('back to sleep: '+ milli_str(sleepTime))
+machine.deepsleep(sleepTime)     # back to sleep
 
