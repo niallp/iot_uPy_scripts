@@ -12,7 +12,10 @@ def do_connect(maxRetry):
     if not sta_if.isconnected():
         bssid = None
         pwd = None
-        nets = sta_if.scan()
+        try: 
+            nets = sta_if.scan()
+        except OSError:
+            return False
         nets.sort(key=lambda net: net[3], reverse=True)     # strongest first
         from netConfig import known_nets
         for net in nets:
@@ -53,11 +56,8 @@ if (dbgSel.value() == 0):   #cause != machine.DEEPSLEEP_RESET):
     gc.collect()
 else:
     if (not do_connect(10)):   # network failed, go back to sleep for 5 minutes
-        print('network failed, sleeping')
-        rtc = machine.RTC()
-        rtc.irq(trigger=rtc.ALARM0, wake=machine.DEEPSLEEP)
-        rtc.alarm(rtc.ALARM0,300000)
-        machine.deepsleep()
+        print('network failed, sleeping 5 min')
+        machine.deepsleep(300000)
     else:
         print('Starting logger')
         #exec(open('logger.py').read())

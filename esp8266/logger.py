@@ -49,7 +49,7 @@ if milliVolts < 3700:
 if milliVolts < 3400:
     sleepTime = sleepTime*3
 if milliVolts < 3200:
-    sleepTime = sleepTime*4     # around 2 hours if very low battery
+    sleepTime = 4200000     # around 70 minutes (max RTC timeout) if very low battery
 
 #open client
 try:
@@ -126,6 +126,8 @@ if brokerFlg:
 
     time.sleep(1)
     c.disconnect()
+else:
+    print(message)
 
 if mqttHost2 != None:
     try:
