@@ -1,8 +1,8 @@
 brdName = 'proD1h'
 userToken = 'cKuRnR8r9zQ8QtB4pnGm'
 adcScl = 442
-mqttHost2 = None
-mqttTopic2 = None
+mqttHost2 = 'mqtt.balsk'
+mqttTopic2 = 'bathroom/main/'
 highPin = None
 lowPin = None
 oneWirePin = 12

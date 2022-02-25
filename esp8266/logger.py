@@ -135,6 +135,7 @@ if mqttHost2 != None:
         c2.connect()
         print("connecting to control broker")
         c2.publish(mqttTopic2+"voltage",vStr)
+        c2.publish(mqttTopic2+"reset_cause",str(machine.reset_cause()))
         if highPin is not None:
             c2.publish(mqttTopic2+"sw_hi",pin_str(highPin))
         if lowPin is not None:
