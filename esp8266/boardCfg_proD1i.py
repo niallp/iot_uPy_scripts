@@ -1,0 +1,11 @@
+brdName = 'proD1i'
+userToken = 'GcFiIcgIumqBRh4vqy9N'
+adcScl = 434
+mqttHost2 = 'mqtt.balsk'
+mqttTopic2 = 'bathroom/main/'
+highPin = None
+lowPin = None
+oneWirePin = None
+dhtPin = None
+sht30Pins = (4, 5)
+minTime = 120
