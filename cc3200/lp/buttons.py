@@ -31,7 +31,7 @@ sw2 = Pin('GP22', mode=Pin.IN)
 sw3 = Pin('GP13', mode=Pin.IN)
 
 #open client 
-c = MQTTClient(brdName,"pogo2")
+c = MQTTClient(brdName,"mqtt")
 c.set_callback(sub_cb)
 c.connect()
 c.subscribe(b"leds")
