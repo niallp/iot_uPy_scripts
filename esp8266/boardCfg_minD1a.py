@@ -1,0 +1,12 @@
+brdName = 'minD1a'
+userToken = '7tUeObZDvJxSERHcMrro'
+adcScl = 330
+mqttHost2 = None
+mqttTopic2 = 'collection/paul/'
+highPin = 4
+lowPin = None
+oneWirePin = None
+dhtPin = None
+sht30Pins = None
+minTime = 600
+nomVolts = 3000

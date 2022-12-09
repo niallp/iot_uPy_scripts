@@ -24,6 +24,7 @@ from boardCfg import oneWirePin
 from boardCfg import dhtPin
 from boardCfg import sht30Pins
 from boardCfg import minTime
+from boardCfg import nomVolts
 
 # account for voltage divider of 100k over 22k on Vinput: tweaked to calibrate
 def vin_mV(adc,scl):
@@ -45,11 +46,11 @@ def pin_str(gpio):
 adc = machine.ADC(0)
 milliVolts = vin_mV(adc.read,adcScl)    # want to sleep longer if voltage is low
 sleepTime = minTime*1000
-if milliVolts < 3700:
+if milliVolts < nomVolts*9/10:
     sleepTime = sleepTime*3
-if milliVolts < 3400:
+if milliVolts < nomVolts*8/10:
     sleepTime = sleepTime*3
-if milliVolts < 3200:
+if milliVolts < nomVolts*7/10:
     sleepTime = sleepTime*10 
 
 if sleepTime > 4200000:
@@ -144,6 +145,9 @@ if mqttHost2 != None:
             c2.publish(mqttTopic2+"sw_hi",pin_str(highPin))
         if lowPin is not None:
             c2.publish(mqttTopic2+"sw_lo",pin_str(lowPin))
+        if sht30Flag:
+            c2.publish(mqttTopic2+"rh",str(rh))
+            c2.publish(mqttTopic2+"temperature",str(t2))
         time.sleep(1)
         c2.disconnect()
     except OSError:

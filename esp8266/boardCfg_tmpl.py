@@ -5,3 +5,7 @@ mqttHost2 = None
 mqttTopic2 = None
 highPin = None
 lowPin = None
+oneWirePin = None
+dhtPin = None
+sht30Pins = None
+minTime = 600
