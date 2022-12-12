@@ -20,6 +20,7 @@ from boardCfg import dhtPin
 from boardCfg import sht30Pins
 from boardCfg import minTime
 from boardCfg import nomVolts
+from ds18B20cal import offsets
 
 # account for voltage divider of 100k over 22k on Vinput: tweaked to calibrate
 def vin_mV(adc,scl):
@@ -41,6 +42,13 @@ def relayCtl(topic, msg):
     global relay
     print("Topic: "+str(topic.decode())+" Msg: "+str(msg.decode()))
     relay.value(int(msg))
+
+def readDS(addr):
+    global offsets
+    if bytes(addr) in offsets:
+        return ds.read_temp(addr) - offsets[bytes(addr)]
+    else:
+        return ds.read_temp(addr)
 
 #setup 
 adc = machine.ADC(0)
@@ -135,10 +143,10 @@ while ctlFlg:
     vStr = milli_str(milliVolts)
     message += "'volts' : {}".format(vStr)
     if tempFlg:
-        message += ", 'temperature' : {}".format(ds.read_temp(roms[0]))
+        message += ", 'temperature' : {}".format(readDS(roms[0]))
         if len(roms) > 1:
             for ti in range(1,len(roms)):
-                message += ", 'temp{}' : {}".format(ti+2,ds.read_temp(roms[ti]))
+                message += ", 'temp{}' : {}".format(ti+2,readDS(roms[ti]))
     if sense1.is_present():
         t1,rh1 = sense1.measure()
         message += ", 'temp1' : {}, 'rh1' : {}".format(t1,rh1)
