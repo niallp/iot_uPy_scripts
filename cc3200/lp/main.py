@@ -6,4 +6,4 @@ micropython.alloc_emergency_exception_buf(100)
 
 autoconfig.wlan()
 
-execfile("buttons.py")
+execfile("logger.py")

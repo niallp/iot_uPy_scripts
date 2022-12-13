@@ -4,7 +4,7 @@ import time
 import machine
 import os
 import wipy
-from simple import MQTTClient
+from umqtt_simple import MQTTClient
 
 def sub_cb(topic, msg):
     global grn, yel
