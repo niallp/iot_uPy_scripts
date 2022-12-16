@@ -15,12 +15,26 @@ brdName = 'lp1'
 userToken = 'taar3KNm6nR6Bu9iThXV'  # for thingsboard
 TMP006_ADDR = 65                    # TMP006 on default I2C bus, just using die temperature for now
 
+# count ticks
+def tick_handler(rtc_o):
+    global ticks
+    ticks += 1
+    if ticks == 30:
+        ticks = 0
+        publish_handler()
+
 # for periodic publishing
-def publish_handler(rtc_o):
+def publish_handler():
     global pubCount
     p_red.value(1)
     pubCount += 1
     p_red.value(0)
+
+# to remotely stop logger
+def checkStop_cb(topic,msg):
+    global loggerStop
+    if int(msg):
+        loggerStop = True
 
 # returns temperature in degree C from AD592 as string
 def ad592_str(adc):
@@ -48,6 +62,8 @@ def sw_str(switch):
 
 #setup 
 wipy.heartbeat(False)
+loggerStop = False
+ticks = 0
 p_red = Pin('GP9', mode=Pin.OUT)       # used for system (heartbeat) by default
 p_red.value(0)
 # green and yellow LEDs conflict with I2C default pins
@@ -65,15 +81,16 @@ if TMP006_ADDR in i2c.scan():
 sw_hi = Pin('GP13', mode=Pin.IN, pull=Pin.PULL_UP)
 sw_lo = Pin('GP22', mode=Pin.IN, pull=Pin.PULL_UP)
 
-adc = { 'vB24' : (1,32660), 'vB12' : (2,16741), 'vSolar' : (3,44486) }
+# single point calibration against MS8209 DVM, 18dec2022
+adc = { 'vB24' : (1,33212), 'vB12' : (2,17061), 'vSolar' : (3,45139) }
 
 pubCount = 0
 nextCount = pubCount
 
 # setup RTC interrupt handler to publish once every period
 rtc = machine.RTC()
-rtc_i = rtc.irq(trigger=machine.RTC.ALARM0, handler=publish_handler, wake=machine.SLEEP)
-rtc.alarm(time=30000, repeat=True)
+rtc_i = rtc.irq(trigger=machine.RTC.ALARM0, handler=tick_handler, wake=machine.SLEEP)
+rtc.alarm(time=1000, repeat=True)
 
 # allow wakeup with switch inputs as well (faster response)
 # note only last enabled interrupt active for machine.SLEEP
@@ -82,14 +99,17 @@ sw_hi.irq(handler=publish_handler, trigger=Pin.IRQ_RISING, wake=machine.SLEEP)
 
 #open client for local access (controller, node-red)
 c = MQTTClient(brdName,"mqtt")
+c.set_callback(checkStop_cb)
 #open 2nd connection for datalogging in thingsboard
 tb = MQTTClient(brdName,'thingsboard.balsk.ca',keepalive=30,user=userToken,password='')
 utime.sleep(1)
 
-while True:
+c.connect()
+c.subscribe(brdName+"/loggerStop")
+print("connecting to mqtt")
+
+while not loggerStop:
     try:
-        c.connect()
-        print("connecting to mqtt")
         tb.connect()
         print("connecting to thingsboard")
         tb_msg = "{"
@@ -107,12 +127,14 @@ while True:
         tb_msg += "'sw_high' : {}, 'sw_low' : {} }}".format(sw_str(sw_hi),sw_str(sw_lo))
         tb.publish("v1/devices/me/telemetry",tb_msg)
         nextCount += 1
-        c.disconnect()
         tb.disconnect()
     except OSError:
         utime.sleep(30)
         machine.reset()
-    while nextCount > pubCount:
-        machine.lightsleep()
+    while nextCount > pubCount and not loggerStop:
+        c.check_msg()
+        machine.lightsleep()    # now RTC on 1 Hz tick
+
+c.disconnect()
 
 print("Exited logger")
