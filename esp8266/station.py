@@ -27,7 +27,7 @@ def vin_mV(adc,scl):
     acc = 0
     for r in range(10):     # average over 10 in case of noise
         acc += adc()
-    milliVolts = ((acc-25)*scl) // 1024
+    milliVolts = ((acc-30)*scl) // 1024
     return milliVolts
 
 def milli_str(millis):
@@ -64,6 +64,12 @@ if milliVolts < nomVolts*7/10:
 
 if sleepTime > 4200000:
     sleepTime = 4200000    # around 70 minutes (max RTC timeout) if very low battery
+
+#optional port for mqttHost2
+if type(mqttHost2) is tuple:
+    mqttHost2, mqttPort2 = mqttHost2
+else:
+    mqttPort2 = 0       # use default
 
 # configure sensors
 if oneWirePin is not None:
@@ -127,7 +133,7 @@ while ctlFlg:
     #for controller
     if ctlFlg:
         try:
-            cCtl = MQTTClient(brdName,mqttHost2)
+            cCtl = MQTTClient(brdName,mqttHost2,port=mqttPort2)
             cCtl.set_callback(relayCtl)
             cCtl.connect()
             print("connecting to controller")

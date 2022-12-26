@@ -1,7 +1,7 @@
 brdName = 'minD1a'
 userToken = '7tUeObZDvJxSERHcMrro'
-adcScl = 1589
-mqttHost2 = 'mqtt.balsk'
+adcScl = 1571
+mqttHost2 = ('thingsboard.balsk.ca',1888)
 mqttTopic2 = 'station/relay'
 highPin = None
 lowPin = None

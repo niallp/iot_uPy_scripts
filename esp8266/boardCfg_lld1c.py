@@ -1,4 +1,12 @@
 brdName = 'lld1c'
 userToken = 'QgiO3LkFHZXaimprIyj9'
 adcScl = 1589
-mqttHost2 = None
+mqttHost2 = ('thingsboard.balsk.ca',1888)
+mqttTopic2 = 'station/relay'
+highPin = None
+lowPin = None
+oneWirePin = 2
+dhtPin = None
+sht30Pins = (4, 5)
+minTime = 30
+nomVolts = 12500
