@@ -164,9 +164,12 @@ while ctlFlg:
     message += "}"
 
     if brokerFlg:
-        cTb.publish("v1/devices/me/telemetry",message)
-        time.sleep_ms(100)
-        cTb.disconnect()
+        try:
+            cTb.publish("v1/devices/me/telemetry",message)
+            time.sleep_ms(100)
+            cTb.disconnect()
+        except OSError:
+            print("Lost broker: msg {}".format(message))
     else:
         print(message)
 
@@ -180,7 +183,14 @@ while ctlFlg:
         ts = 0
         if tempFlg:
             ds.convert_temp()
-        while (ts < sleepTime/500):
-            cCtl.check_msg()
+        while (ts < sleepTime/500) and ctlFlg:
+            try:
+                cCtl.check_msg()
+            except OSError:
+                ctlFlg = False
             time.sleep_ms(500)
             ts += 1
+
+print("Lost control broker, restarting")
+time.sleep(60)
+machine.reset()
