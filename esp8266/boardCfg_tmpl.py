@@ -9,3 +9,4 @@ oneWirePin = None
 dhtPin = None
 sht30Pins = None
 minTime = 600
+nomVolts = 4000
