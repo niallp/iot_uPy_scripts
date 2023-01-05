@@ -35,8 +35,14 @@ l76 = L76GNSS(py, timeout=30)
 chrono = Timer.Chrono()
 chrono.start()
 # mqtt via thingsboard
-client = MQTTClient(brdName,mqttHost,keepalive=30,user=userToken,password='')
-client.connect()
+try:
+    client = MQTTClient(brdName,mqttHost,keepalive=30,user=userToken,password='')
+    client.connect()
+    brokerFlg = True
+except:
+    print("can't connect to TB")
+    brokerFlg = False
+
 #sd = SD()
 #os.mount(sd, '/sd')
 #f = open('/sd/gps-record.txt', 'w')
@@ -52,6 +58,9 @@ while (True):
     if coord != (None,None):
         mesg += ",'latitude' : "+str(coord[0])+ ", 'longitude' : "+str(coord[1])
     mesg += "}"
-    client.publish(topic="v1/devices/me/telemetry",msg=mesg)
+    if brokerFlg:
+        client.publish(topic="v1/devices/me/telemetry",msg=mesg)
+    else:
+        print(mesg)
     rgbled(0)
     time.sleep(5)

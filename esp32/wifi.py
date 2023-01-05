@@ -7,6 +7,8 @@ def connect(known_nets):
     wl.mode(WLAN.STA)
     original_ssid = wl.ssid()
     original_auth = wl.auth()
+    if original_ssid == None:
+        original_ssid = 'fipy'
 
     rgbled(0x0f0000)
     print("Scanning for known wifi nets")
