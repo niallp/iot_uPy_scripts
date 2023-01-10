@@ -8,14 +8,24 @@ def do_connect(maxRetry):
     ap_if = network.WLAN(network.AP_IF)
     ap_if.active(False)
     sta_if = network.WLAN(network.STA_IF)
-    sta_if.active(True)
     if not sta_if.isconnected():
+        # first try cached connection
+        sta_if.connect()
+        sleep_ms(200)
+        if sta_if.isconnected():
+            print('\n(cached)network config:', sta_if.ifconfig())
+            return True
+        else:
+            print('\ncached network failed, scanning')
+        # if didn't work 1st go then scan and try list
+        sta_if.active(True)
         bssid = None
         pwd = None
         try: 
             nets = sta_if.scan()
         except OSError:
             return False
+        print('{} nets found'.format(len(nets)))
         nets.sort(key=lambda net: net[3], reverse=True)     # strongest first
         from netConfig import known_nets
         for net in nets:
