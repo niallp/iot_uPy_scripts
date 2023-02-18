@@ -54,7 +54,10 @@ def readDS(addr):
 adc = machine.ADC(0)
 milliVolts = vin_mV(adc.read,adcScl)    # want to sleep longer if voltage is low
 sleepTime = minTime*1000
-ctlFlg = True
+if mqttHost2 != None and mqttTopic2 != None:
+    ctlFlg = True
+else:
+    ctlFlg = False
 if milliVolts < nomVolts*9/10:
     sleepTime = sleepTime*3
 if milliVolts < nomVolts*8/10:
