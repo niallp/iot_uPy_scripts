@@ -1,4 +1,4 @@
-brdName = 'lld1a'
+brdName = 'proD1a'
 userToken = 'J2qBiBWLm6rw62sNtd6W'
 adcScl = 442
 mqttHost2 = None
@@ -8,3 +8,5 @@ lowPin = None
 oneWirePin = 12
 dhtPin = None
 sht30Pins = (4, 5)
+minTime = 600
+nomVolts = 4000
