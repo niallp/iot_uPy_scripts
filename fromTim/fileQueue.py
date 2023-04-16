@@ -31,19 +31,20 @@ class FILEQUEUE():
             fp.close()
         else:
             #if file does not exist, write file with read pointer and at line 2 add message, close 
-            #currently, the read pointer is 12 digits.  need to calculate if this is enough.  
+            #currently, the read pointer is 11 digits.  need to calculate if this is enough.  
             #The specific size of the readpointer is used to make sure we don't overwrite any subsequent 
             #bytes.  It is overwriten to track the location of already transmitted data
             #while all the other timestamped data is appended.
             fp = open(self.queueFilename, 'a')
             #write read pointer
-            fp.write(f"{12:0>10d}" + "\n")
+            fp.write(f"{11:0>10d}" + '\n')
             fp.write(message + '\n')
             fp.close()
     
-    def removeFromQueue ( self, message ):
+    def removeFromQueue ( self ):
         #if file doesn't exist, return NO_MORE_MESSAGES
 
+        message = "no data"
         if(self.fileExists()):
             fp=open(self.queueFilename, 'r+')
             fp.seek(0)
