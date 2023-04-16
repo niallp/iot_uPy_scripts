@@ -1,0 +1,12 @@
+brdName = 'minD1c'
+userToken = 'lRfyoJty4SUg6JrH7ra6'
+adcScl = 1571
+mqttHost2 = None
+mqttTopic2 = None
+highPin = None
+lowPin = None
+oneWirePin = 2
+dhtPin = None
+sht30Pins = None
+minTime = 30
+nomVolts = 5000
