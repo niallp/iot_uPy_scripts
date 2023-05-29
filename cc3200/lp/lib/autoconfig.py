@@ -45,7 +45,11 @@ WLAN: connected!
             print('WLAN: error: {}'.format(e))
             wlanconfig = None
     if wlanconfig is None:
-        wlan.init(mode=WLAN.AP, ssid='wipy-wlan', auth=(WLAN.WPA2,'www.wipy.io'), channel=7, antenna=WLAN.INT_ANT)
+        import machine
+        machine.deepsleep(10000)
+        # following should not execute
+        print('No AP found, starting our own ...')
+        wlan.init(mode=WLAN.AP, ssid='launchpad', auth=None, channel=7)
 
 
 

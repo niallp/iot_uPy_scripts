@@ -11,8 +11,14 @@ import wipy
 
 from umqtt_simple import MQTTClient
 
-brdName = 'lp1'
-userToken = 'taar3KNm6nR6Bu9iThXV'  # for thingsboard
+if machine.unique_id() == b'TJ\x16.\xdb\xfe':
+    brdName = 'lp2'
+    userToken = 'qwA3HRsc2WNu4Fi0Qmpy'
+else:
+    brdName = 'lp1'
+    userToken = 'taar3KNm6nR6Bu9iThXV'  # for thingsboard
+
+
 TMP006_ADDR = 65                    # TMP006 on default I2C bus, just using die temperature for now
 
 # count ticks
@@ -21,10 +27,10 @@ def tick_handler(rtc_o):
     ticks += 1
     if ticks == 30:
         ticks = 0
-        publish_handler()
+        publish_handler(None)
 
 # for periodic publishing
-def publish_handler():
+def publish_handler(pin):
     global pubCount
     p_red.value(1)
     pubCount += 1
@@ -78,8 +84,8 @@ if TMP006_ADDR in i2c.scan():
     if i2c.readfrom_mem(TMP006_ADDR,254,2) == b'TI' and i2c.readfrom_mem(TMP006_ADDR,255,2) == b'\x00g':
         tempFlg = True
 
-sw_hi = Pin('GP13', mode=Pin.IN, pull=Pin.PULL_UP)
-sw_lo = Pin('GP22', mode=Pin.IN, pull=Pin.PULL_UP)
+sw_hi = Pin('GP13', mode=Pin.IN, pull=None)  # left hand (SW3), note external pulldown
+sw_lo = Pin('GP22', mode=Pin.IN, pull=None)  # right hand (SW2)
 
 # single point calibration against MS8209 DVM, 18dec2022
 adc = { 'vB24' : (1,33212), 'vB12' : (2,17061), 'vSolar' : (3,45139) }
