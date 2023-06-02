@@ -38,6 +38,11 @@ WLAN: connected!
       DNS:     {}'''.format(*wlan.ifconfig()))
                     break
                 time.sleep_ms(100)
+            if not wlan.isconnected():
+                print('WLAN: failed to get IP, resetting !')
+                time.sleep(10)
+                import machine
+                machine.reset()
         except OSError:
             print('WLAN: found no router, going into AP mode instead')
             wlanconfig = None
@@ -46,10 +51,9 @@ WLAN: connected!
             wlanconfig = None
     if wlanconfig is None:
         import machine
-        machine.deepsleep(10000)
+        print('No AP found, sleep then reset ...')
+        time.sleep(10)
+        machine.reset()
         # following should not execute
         print('No AP found, starting our own ...')
         wlan.init(mode=WLAN.AP, ssid='launchpad', auth=None, channel=7)
-
-
-
