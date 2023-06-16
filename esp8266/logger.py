@@ -118,6 +118,10 @@ if lowPin is not None:
     message = message + ", 'sw_low' : "+pin_str(lowPin)
 if tempFlg:
     message = message + ", 'temperature' : " + str(ds.read_temp(roms[0]))
+    # any additional 1W sensors will carry on at temp3 etc.
+    if len(roms) > 1:
+            for ti in range(1,len(roms)):
+                message += ", 'temp{}' : {}".format(ti+2,readDS(roms[ti]))
 # only expect one of following RH sensors installed
 if dhFlag:
     message = message + ", 'temp2' : "+ str(ht.temperature()) + ", 'rh1' : "+ str(ht.humidity()) 
@@ -127,10 +131,13 @@ if sht30Flag:
 message = message + "}"
 
 if brokerFlg:
-    c.publish("v1/devices/me/telemetry",message)
-
-    time.sleep(1)
-    c.disconnect()
+    try:
+        c.publish("v1/devices/me/telemetry",message)
+        time.sleep(1)
+        c.disconnect()
+    except OSError:
+        print("Lost broker: msg {}".format(message))
+        brokerFlg = False
 else:
     print(message)
 

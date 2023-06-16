@@ -134,12 +134,12 @@ while not loggerStop:
         tb.publish("v1/devices/me/telemetry",tb_msg)
         nextCount += 1
         tb.disconnect()
+        while nextCount > pubCount and not loggerStop:
+            c.check_msg()
+            machine.lightsleep()    # now RTC on 1 Hz tick
     except OSError:
         utime.sleep(30)
         machine.reset()
-    while nextCount > pubCount and not loggerStop:
-        c.check_msg()
-        machine.lightsleep()    # now RTC on 1 Hz tick
 
 c.disconnect()
 
