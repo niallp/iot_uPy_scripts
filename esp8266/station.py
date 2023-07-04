@@ -68,6 +68,12 @@ if milliVolts < nomVolts*7/10:
 if sleepTime > 4200000:
     sleepTime = 4200000    # around 70 minutes (max RTC timeout) if very low battery
 
+#optional port for mqttHost
+if type(mqttHost) is tuple:
+    mqttHost, mqttPort = mqttHost
+else:
+    mqttPort = 0       # use default
+
 #optional port for mqttHost2
 if type(mqttHost2) is tuple:
     mqttHost2, mqttPort2 = mqttHost2
@@ -123,13 +129,13 @@ while ctlFlg:
 
     #open client
     try:
-        cTb = MQTTClient(brdName,mqttHost,keepalive=30,user=userToken,password='')
+        cTb = MQTTClient(brdName,mqttHost,port=mqttPort,keepalive=30,user=userToken,password='')
         # extra delay to allow network to stabilize
         time.sleep_ms(100)           
         cTb.connect()
         print("connecting to broker")
         brokerFlg = True
-    except OSError:
+    except:
         print("failure to connect to broker")
         brokerFlg = False
 
@@ -141,7 +147,7 @@ while ctlFlg:
             cCtl.connect()
             print("connecting to controller")
             cCtl.subscribe(mqttTopic2)
-        except OSError:
+        except:
             print("failure to connect to controller")
             ctlFlg = False
 
@@ -171,7 +177,7 @@ while ctlFlg:
             cTb.publish("v1/devices/me/telemetry",message)
             time.sleep_ms(100)
             cTb.disconnect()
-        except OSError:
+        except:
             print("Lost broker: msg {}".format(message))
     else:
         print(message)
@@ -189,7 +195,7 @@ while ctlFlg:
         while (ts < sleepTime/500) and ctlFlg:
             try:
                 cCtl.check_msg()
-            except OSError:
+            except:
                 ctlFlg = False
             time.sleep_ms(500)
             ts += 1

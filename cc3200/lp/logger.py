@@ -137,7 +137,7 @@ while not loggerStop:
         while nextCount > pubCount and not loggerStop:
             c.check_msg()
             machine.lightsleep()    # now RTC on 1 Hz tick
-    except OSError:
+    except:
         utime.sleep(30)
         machine.reset()
 

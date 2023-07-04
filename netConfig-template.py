@@ -1,4 +1,4 @@
-mqttHost = 'thingsboard.balsk.ca'
+mqttHost = ('thingsboard.balsk.ca',1888)
 known_nets = {
     'balskG': {'pwd': None},
     'Community Hall': {'pwd': None},
