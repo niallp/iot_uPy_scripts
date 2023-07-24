@@ -104,7 +104,7 @@ rtc.alarm(time=1000, repeat=True)
 sw_hi.irq(handler=publish_handler, trigger=Pin.IRQ_RISING, wake=machine.SLEEP)
 
 #open client for local access (controller, node-red)
-c = MQTTClient(brdName,"mqtt")
+c = MQTTClient(brdName,"mqtt",keepalive=60)
 c.set_callback(checkStop_cb)
 #open 2nd connection for datalogging in thingsboard
 tb = MQTTClient(brdName,'thingsboard.balsk.ca',keepalive=30,user=userToken,password='')

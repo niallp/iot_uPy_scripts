@@ -142,7 +142,7 @@ while ctlFlg:
     #for controller
     if ctlFlg:
         try:
-            cCtl = MQTTClient(brdName,mqttHost2,port=mqttPort2)
+            cCtl = MQTTClient(brdName,mqttHost2,port=mqttPort2,keepalive=60)
             cCtl.set_callback(relayCtl)
             cCtl.connect()
             print("connecting to controller")
