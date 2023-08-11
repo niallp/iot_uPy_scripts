@@ -1,10 +1,10 @@
-brdName = 'lld1b'
+brdName = 'proD1b'
 userToken = 'syHqUCjmlkVuFL74CKsC'
 adcScl = 438
-mqttHost2 = 'mqtt-east.balsk'
-mqttTopic2 = 'cabin/node/'
+mqttHost2 = None
+mqttTopic2 = None
 highPin = 4
 lowPin = 5
-oneWirePin = 12
+oneWirePin = None
 dhtPin = None
 sht30Pins =  None
