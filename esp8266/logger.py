@@ -16,6 +16,7 @@ from boardCfg import brdName
 from boardCfg import adcScl
 from boardCfg import userToken
 from netConfig import mqttHost
+from netConfig import RSSI
 from boardCfg import mqttHost2
 from boardCfg import mqttTopic2
 from boardCfg import highPin
@@ -56,15 +57,21 @@ if milliVolts < nomVolts*7/10:
 if sleepTime > 4200000:
     sleepTime = 4200000    # around 70 minutes (max RTC timeout) if very low battery
 
+#optional port for mqttHost
+if type(mqttHost) is tuple:
+    mqttHost, mqttPort = mqttHost
+else:
+    mqttPort = 0       # use default
+
 #open client
 try:
-    c = MQTTClient(brdName,mqttHost,keepalive=30,user=userToken,password='')
+    c = MQTTClient(brdName,mqttHost,port=mqttPort,keepalive=30,user=userToken,password='')
     # extra delay to allow network to stabilize
     time.sleep(1)           
     c.connect()
     print("connecting to broker")
     brokerFlg = True
-except OSError:
+except:
     print("failure to connect to broker")
     brokerFlg = False
 
@@ -95,14 +102,17 @@ else:
     dhFlag = False
 
 if sht30Pins is not None:
-    import sht30
-    sda, scl = sht30Pins
-    sense = sht30.SHT30(scl_pin=scl, sda_pin=sda)
-    if not sense.is_present():
-        sense = sht30.SHT30(scl_pin=scl, sda_pin=sda, i2c_address=sht30.ALTERNATE_I2C_ADDRESS)
-    if sense.is_present():
-        sht30Flag = True
-    else:
+    try:
+        import sht30
+        sda, scl = sht30Pins
+        sense = sht30.SHT30(scl_pin=scl, sda_pin=sda)
+        if not sense.is_present():
+            sense = sht30.SHT30(scl_pin=scl, sda_pin=sda, i2c_address=sht30.ALTERNATE_I2C_ADDRESS)
+        if sense.is_present():
+            sht30Flag = True
+        else:
+            sht30Flag = False
+    except:
         sht30Flag = False
 else:
     sht30Flag = False
@@ -128,16 +138,46 @@ if dhFlag:
 if sht30Flag:
     t2, rh = sense.measure()
     message = message + ", 'temp2' : "+ str(t2) + ", 'rh1' : "+ str(rh) 
+# for RSSI, from boot.py
+message = message + ", 'RSSI' : " + str(RSSI)
 message = message + "}"
 
+import fileQueue
+from fileQueue import OK
+from fileQueue import NO_MORE_MESSAGES
+queue = fileQueue.FILEQUEUE("dataQueue.txt")
+
 if brokerFlg:
+    #only do this if we were able to connect to the broker
+    import ntptime
+    ntptime.host = "0.ca.pool.ntp.org"
+    try:
+        ntptime.settime()
+        print("ntptime worked")
+    except:
+        print("ntptime error: ")
+
+    message = "{'ts': " + str(time.time()*1000 + 946684800000) + ", 'values': " + message + "}"
+        
+    publishOK = False
     try:
         c.publish("v1/devices/me/telemetry",message)
         time.sleep(1)
+        publishOK = True    # if this message published then don't add to queue
+        while 1:
+            errorCode, outputMessage = queue.removeFromQueue()
+            if( errorCode == OK ):
+                c.publish("v1/devices/me/telemetry",outputMessage)
+            else:
+                break
         c.disconnect()
     except OSError:
         print("Lost broker: msg {}".format(message))
         brokerFlg = False
+        if not publishOK:
+            print("add msg to queue")
+            queue.addToQueue(message)
+
 else:
     print(message)
 
@@ -162,4 +202,3 @@ if mqttHost2 != None:
 
 print('back to sleep: '+ milli_str(sleepTime))
 machine.deepsleep(sleepTime)     # back to sleep
-

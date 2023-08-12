@@ -1,6 +1,7 @@
 # This file is executed on every boot (including wake-boot from deepsleep)
 
 # should now try strongest ap it knows about, default to balskG
+
 def do_connect(maxRetry):
     retry = 0
     import network
@@ -8,6 +9,7 @@ def do_connect(maxRetry):
     ap_if = network.WLAN(network.AP_IF)
     ap_if.active(False)
     sta_if = network.WLAN(network.STA_IF)
+    sta_if.active(True)
     if not sta_if.isconnected():
         # first try cached connection
         sta_if.connect()
@@ -32,6 +34,10 @@ def do_connect(maxRetry):
             ssid = net[0].decode('utf-8')
             if ssid in known_nets:
                 bssid = net[1]
+                import netConfig
+                netConfig.RSSI = net[3]
+                print("RSSI: ", netConfig.RSSI)
+
                 if bssid == b'\xc0J\x00,\xb1\x8d':
                     print('skip bssid '+str(bssid))
                 else:
@@ -52,6 +58,7 @@ def do_connect(maxRetry):
     return sta_if.isconnected()
 
 
+
 import esp
 esp.osdebug(None)
 import machine
@@ -65,9 +72,30 @@ if (dbgSel.value() == 0):   #cause != machine.DEEPSLEEP_RESET):
     webrepl.start()
     gc.collect()
 else:
-    if (not do_connect(10)):   # network failed, go back to sleep for 5 minutes
-        print('network failed, sleeping 5 min')
-        machine.deepsleep(300000)
-    else:
-        print('Starting logger')
-        #exec(open('logger.py').read())
+    #input("keyboard input: ")
+        
+    try:
+        if (not do_connect(30)):   # network failed, go back to sleep for 5 minutes
+            import netConfig
+            netConfig.wifiConnected = False
+
+            print("failed do_connect: " + str(netConfig.wifiConnected))
+
+            #machine.deepsleep(60000)
+        else:
+            
+            import netConfig
+            print("connected: " + str(netConfig.wifiConnected))
+            netConfig.wifiConnected = True
+            print("passed doconnect: " + str(netConfig.wifiConnected))
+
+            print('starting')
+            
+            
+    except:
+        import netConfig
+        print("exceptions: doconnect: " + str(netConfig.wifiConnected))
+        netConfig.wifiConnected = False
+        print("exception: doconnect, wifi should be False -> " + str(netConfig.wifiConnected))
+
+        print('starting from exception')
