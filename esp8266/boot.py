@@ -10,53 +10,36 @@ def do_connect(maxRetry):
     ap_if.active(False)
     sta_if = network.WLAN(network.STA_IF)
     sta_if.active(True)
-    if not sta_if.isconnected():
-        # first try cached connection
-        sta_if.connect()
-        sleep_ms(200)
-        if sta_if.isconnected():
-            print('\n(cached)network config:', sta_if.ifconfig())
-            return True
+    bssid = None
+    pwd = None
+    try: 
+        nets = sta_if.scan()
+    except OSError:
+        return False
+    print('{} nets found'.format(len(nets)))
+    nets.sort(key=lambda net: net[3], reverse=True)     # strongest first
+    from netConfig import known_nets
+    for net in nets:
+        ssid = net[0].decode('utf-8')
+        if ssid in known_nets:
+            bssid = net[1]
+            import netConfig
+            netConfig.RSSI = net[3]
+            pwd = known_nets[ssid]['pwd']
+            break
         else:
-            print('\ncached network failed, scanning')
-        # if didn't work 1st go then scan and try list
-        sta_if.active(True)
-        bssid = None
-        pwd = None
-        try: 
-            nets = sta_if.scan()
-        except OSError:
-            return False
-        print('{} nets found'.format(len(nets)))
-        nets.sort(key=lambda net: net[3], reverse=True)     # strongest first
-        from netConfig import known_nets
-        for net in nets:
-            ssid = net[0].decode('utf-8')
-            if ssid in known_nets:
-                bssid = net[1]
-                import netConfig
-                netConfig.RSSI = net[3]
-                print("RSSI: ", netConfig.RSSI)
-
-                if bssid == b'\xc0J\x00,\xb1\x8d':
-                    print('skip bssid '+str(bssid))
-                else:
-                    pwd = known_nets[ssid]['pwd']
-                    break
-            else:
-                print(ssid+" is unknown")
-        print('connecting to network '+ssid+' BSSID: '+str(bssid))
-        if bssid == None:
-            sta_if.connect(ssid,pwd)
-        else:
-            sta_if.connect(ssid,pwd,bssid=bssid)
-        while (not sta_if.isconnected() and retry < maxRetry):
-            retry = retry + 1
-            print('retry {}'.format(retry))
-            sleep_ms(500)
+            print(ssid+" is unknown")
+    print('connecting to network '+ssid+' BSSID: '+str(bssid))
+    if bssid == None:
+        sta_if.connect(ssid,pwd)
+    else:
+        sta_if.connect(ssid,pwd,bssid=bssid)
+    while (not sta_if.isconnected() and retry < maxRetry):
+        retry = retry + 1
+        print('retry {}'.format(retry))
+        sleep_ms(500)
     print('network config:', sta_if.ifconfig())
     return sta_if.isconnected()
-
 
 
 import esp

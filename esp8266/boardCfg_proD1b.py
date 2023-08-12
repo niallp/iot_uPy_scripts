@@ -1,8 +1,8 @@
 brdName = 'proD1b'
 userToken = 'syHqUCjmlkVuFL74CKsC'
 adcScl = 438
-mqttHost2 = None
-mqttTopic2 = None
+mqttHost2 = 'mqtt.balsk'
+mqttTopic2 = 'tank/'
 highPin = 4
 lowPin = 5
 oneWirePin = None
