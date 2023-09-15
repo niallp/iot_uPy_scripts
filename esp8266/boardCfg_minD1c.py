@@ -1,9 +1,9 @@
 brdName = 'minD1c'
 userToken = 'lRfyoJty4SUg6JrH7ra6'
 adcScl = 1571
-mqttHost2 = None
-mqttTopic2 = None
-highPin = None
+mqttHost2 = ('mqtt.balsk',1883)
+mqttTopic2 = 'test/relay'
+highPin = 13
 lowPin = None
 oneWirePin = 2
 dhtPin = None

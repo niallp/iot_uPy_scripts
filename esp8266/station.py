@@ -162,12 +162,13 @@ while ctlFlg:
         if len(roms) > 1:
             for ti in range(1,len(roms)):
                 message += ", 'temp{}' : {}".format(ti+2,readDS(roms[ti]))
-    if sense1.is_present():
-        t1,rh1 = sense1.measure()
-        message += ", 'temp1' : {}, 'rh1' : {}".format(t1,rh1)
-    if sense2.is_present():
-        t2,rh2 = sense2.measure()
-        message += ", 'temp2' : {}, 'rh2' : {}".format(t2,rh2)
+    if sht30Flag:
+        if sense1.is_present():
+            t1,rh1 = sense1.measure()
+            message += ", 'temp1' : {}, 'rh1' : {}".format(t1,rh1)
+        if sense2.is_present():
+            t2,rh2 = sense2.measure()
+            message += ", 'temp2' : {}, 'rh2' : {}".format(t2,rh2)
     if ctlFlg:
         message += ", 'relayEcho' : {}".format(relay.value())
     message += "}"
