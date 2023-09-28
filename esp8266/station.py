@@ -39,9 +39,12 @@ def pin_str(gpio):
     return '1' if pin.value() == 0 else '0'
 
 def relayCtl(topic, msg):
-    global relay
+    global relay, acOn
     print("Topic: "+str(topic.decode())+" Msg: "+str(msg.decode()))
-    relay.value(int(msg))
+    if topic.endswith('inverter'):
+        acOn = bool(int(msg))
+    if topic.endswith('relay'):
+        relay.value(int(msg))
 
 def readDS(addr):
     global offsets
@@ -50,10 +53,16 @@ def readDS(addr):
     else:
         return ds.read_temp(addr)
 
+def blip(relay):
+    relay.value(1)
+    time.sleep_ms(20)
+    relay.value(0)
+    time.sleep_ms(30)
+
 #setup 
 adc = machine.ADC(0)
 milliVolts = vin_mV(adc.read,adcScl)    # want to sleep longer if voltage is low
-sleepTime = minTime*1000
+sleepTime = minTime*1000                # (ms)
 if mqttHost2 != None and mqttTopic2 != None:
     ctlFlg = True
 else:
@@ -120,9 +129,12 @@ else:
 
 relay = machine.Pin(15,machine.Pin.OUT)
 relay.value(0)
+acPresentPin = machine.Pin(13,machine.Pin.IN,machine.Pin.PULL_UP)
+acPresent = not bool(acPresentPin.value())
+acOn = acPresent        # first time we accept existing state of power
 
 while ctlFlg:
-    if milliVolts < 6500:  #ie station battery low
+    if milliVolts < nomVolts/2:  #ie station battery low
         print("low battery, monitor only")
         ctlFlg = False
         sleepTime = 120000
@@ -146,7 +158,11 @@ while ctlFlg:
             cCtl.set_callback(relayCtl)
             cCtl.connect()
             print("connecting to controller")
-            cCtl.subscribe(mqttTopic2)
+            if type(mqttTopic2) is list:
+                for t in mqttTopic2:
+                    cCtl.subscribe(t)
+            else:
+                cCtl.subscribe(mqttTopic2)
         except:
             print("failure to connect to controller")
             ctlFlg = False
@@ -170,7 +186,8 @@ while ctlFlg:
             t2,rh2 = sense2.measure()
             message += ", 'temp2' : {}, 'rh2' : {}".format(t2,rh2)
     if ctlFlg:
-        message += ", 'relayEcho' : {}".format(relay.value())
+        message += ", 'acOn' : {}".format(acOn)
+        message += ", 'acPresent' : {}".format(acPresent)
     message += "}"
 
     if brokerFlg:
@@ -190,16 +207,22 @@ while ctlFlg:
         machine.deepsleep(sleepTime)     # back to sleep
     else:
         print('awake but waiting: '+milli_str(sleepTime))
-        ts = 0
         if tempFlg:
             ds.convert_temp()
-        while (ts < sleepTime/500) and ctlFlg:
+        start = time.ticks_ms()
+        while (time.ticks_diff(time.ticks_ms(),start) < sleepTime) and ctlFlg:
+            acPresent = not bool(acPresentPin.value())
             try:
+                oldAC = acOn
                 cCtl.check_msg()
             except:
                 ctlFlg = False
-            time.sleep_ms(500)
-            ts += 1
+            if oldAC != acOn:
+                if acOn and not acPresent:
+                    blip(relay)
+                if not acOn and acPresent:
+                    blip(relay)
+            time.sleep_ms(100)          # idle and let inverter settle
 
 print("Lost control broker, restarting")
 time.sleep(60)
