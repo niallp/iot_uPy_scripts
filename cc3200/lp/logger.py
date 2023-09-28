@@ -110,9 +110,16 @@ c.set_callback(checkStop_cb)
 tb = MQTTClient(brdName,'thingsboard.balsk.ca',keepalive=30,user=userToken,password='')
 utime.sleep(1)
 
-c.connect()
-c.subscribe(brdName+"/loggerStop")
-print("connecting to mqtt")
+try:
+    c.connect()
+    c.subscribe(brdName+"/loggerStop")
+    print("connecting to mqtt")
+except:
+    print("error connecting to mqtt, resetting")
+    utime.sleep(3)
+    machine.reset()
+
+
 
 while not loggerStop:
     try:
