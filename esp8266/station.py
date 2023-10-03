@@ -55,9 +55,9 @@ def readDS(addr):
 
 def blip(relay):
     relay.value(1)
-    time.sleep_ms(20)
+    time.sleep_ms(200)
     relay.value(0)
-    time.sleep_ms(30)
+    time.sleep_ms(50)
 
 #setup 
 adc = machine.ADC(0)
