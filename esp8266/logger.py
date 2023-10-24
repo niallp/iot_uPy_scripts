@@ -63,6 +63,13 @@ if type(mqttHost) is tuple:
 else:
     mqttPort = 0       # use default
 
+#optional port for mqttHost2
+if type(mqttHost2) is tuple:
+    mqttHost2, mqttPort2 = mqttHost2
+else:
+    mqttPort2 = 0       # use default
+
+
 #open client
 try:
     c = MQTTClient(brdName,mqttHost,port=mqttPort,keepalive=30,user=userToken,password='')
@@ -142,6 +149,17 @@ if sht30Flag:
 message = message + ", 'RSSI' : " + str(RSSI)
 message = message + "}"
 
+# add timestamp, using NTP synch if possible
+import ntptime
+ntptime.host = "0.ca.pool.ntp.org"
+try:
+    ntptime.settime()
+    print("ntptime worked")
+except:
+    print("ntptime error: ")
+
+message = "{'ts': " + str(time.time()*1000 + 946684800000) + ", 'values': " + message + "}"
+
 import fileQueue
 from fileQueue import OK
 from fileQueue import NO_MORE_MESSAGES
@@ -149,16 +167,6 @@ queue = fileQueue.FILEQUEUE("dataQueue.txt")
 
 if brokerFlg:
     #only do this if we were able to connect to the broker
-    import ntptime
-    ntptime.host = "0.ca.pool.ntp.org"
-    try:
-        ntptime.settime()
-        print("ntptime worked")
-    except:
-        print("ntptime error: ")
-
-    message = "{'ts': " + str(time.time()*1000 + 946684800000) + ", 'values': " + message + "}"
-        
     publishOK = False
     try:
         c.publish("v1/devices/me/telemetry",message)
@@ -180,10 +188,12 @@ if brokerFlg:
 
 else:
     print(message)
+    print("add msg to queue")
+    queue.addToQueue(message)
 
 if mqttHost2 != None:
     try:
-        c2 = MQTTClient(brdName,mqttHost2,keepalive=30)
+        c2 = MQTTClient(brdName,mqttHost2,port=mqttPort2,keepalive=30)
         c2.connect()
         print("connecting to control broker")
         c2.publish(mqttTopic2+"voltage",vStr)
@@ -192,9 +202,11 @@ if mqttHost2 != None:
             c2.publish(mqttTopic2+"sw_hi",pin_str(highPin))
         if lowPin is not None:
             c2.publish(mqttTopic2+"sw_lo",pin_str(lowPin))
+        if tempFlg:
+            c2.publish(mqttTopic2+"temperature",str(ds.read_temp(roms[0])))
         if sht30Flag:
             c2.publish(mqttTopic2+"rh",str(rh))
-            c2.publish(mqttTopic2+"temperature",str(t2))
+            c2.publish(mqttTopic2+"temp2",str(t2))
         time.sleep(1)
         c2.disconnect()
     except OSError:
