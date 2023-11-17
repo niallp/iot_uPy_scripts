@@ -1,12 +1,12 @@
 brdName = 'minD1c'
 userToken = 'lRfyoJty4SUg6JrH7ra6'
-adcScl = 1571
+adcScl = 1551
 mqttHost2 = ('mqtt.balsk',1883)
-mqttTopic2 = ['test/relay','test/inverter']
+mqttTopic2 = 'coop/'
 highPin = None
 lowPin = None
-oneWirePin = 2
+oneWirePin = 12
 dhtPin = None
-sht30Pins = None
+sht30Pins = (4, 5)
 minTime = 30
-nomVolts = 0000
+nomVolts = 10000

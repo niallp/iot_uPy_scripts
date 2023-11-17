@@ -8,3 +8,5 @@ lowPin = None
 oneWirePin = None
 dhtPin = 13
 sht30Pins = None
+minTime = 90
+nomVolts = 4000

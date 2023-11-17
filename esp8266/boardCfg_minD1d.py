@@ -1,0 +1,12 @@
+brdName = 'minD1d'
+userToken = 'rjmqc6b1qwpc63lb5745'
+adcScl = 1571
+mqttHost2 = ('mqtt.balsk',1883)
+mqttTopic2 = 'minD1d/'
+highPin = None
+lowPin = None
+oneWirePin = None
+dhtPin = None
+sht30Pins = (4, 5)
+minTime = 30
+nomVolts = 0000

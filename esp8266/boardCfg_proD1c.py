@@ -1,4 +1,4 @@
-brdName = 'lld1c'
+brdName = 'proD1c'
 userToken = 'QgiO3LkFHZXaimprIyj9'
 adcScl = 1604
 mqttHost2 = None
