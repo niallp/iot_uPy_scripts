@@ -1,6 +1,6 @@
 # This file is executed on every boot (including wake-boot from deepsleep)
 
-# should now try strongest ap it knows about, default to balskG
+# should now try strongest ap it knows about
 
 def do_connect(maxRetry):
     retry = 0
@@ -55,8 +55,6 @@ if (dbgSel.value() == 0):   #cause != machine.DEEPSLEEP_RESET):
     webrepl.start()
     gc.collect()
 else:
-    #input("keyboard input: ")
-        
     try:
         if (not do_connect(30)):   # network failed, go back to sleep for 5 minutes
             import netConfig
@@ -82,3 +80,29 @@ else:
         print("exception: doconnect, wifi should be False -> " + str(netConfig.wifiConnected))
 
         print('starting from exception')
+
+# try ntptime if time not set or 1 day passed since last time synched
+# note only try if we have wifi connection
+if netConfig.wifiConnected:
+    import time
+    import ustruct
+    rtc = machine.RTC()
+    if len(rtc.memory()) == 0:
+        rtcSetTime = 0
+    else:
+        rtcSetTime = ustruct.unpack('L',rtc.memory())[0]
+    now = time.time()
+    if now < 754471188 or rtcSetTime == 0 or now-rtcSetTime > 86400:
+        print('need to resync time')
+        import ntptime
+        ntptime.host = "0.ca.pool.ntp.org"
+        try:
+            ntptime.settime()
+            print("ntptime worked")
+            rtc.memory(ustruct.pack('L',time.time()))
+        except:
+            print("ntptime error ...")
+    else:
+        print("skipping NTP sync")
+else:
+    print("can't sync time, no network")

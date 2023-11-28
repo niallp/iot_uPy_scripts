@@ -26,6 +26,7 @@ from boardCfg import dhtPin
 from boardCfg import sht30Pins
 from boardCfg import minTime
 from boardCfg import nomVolts
+from ds18B20cal import offsets
 
 # account for voltage divider of 100k over 22k on Vinput: tweaked to calibrate
 def vin_mV(adc,scl):
@@ -43,6 +44,13 @@ def pin_str(gpio):
     pin = machine.Pin(gpio,machine.Pin.IN,machine.Pin.PULL_UP)
     return '1' if pin.value() == 0 else '0'
 
+def readDS(addr):
+    global offsets
+    if bytes(addr) in offsets:
+        return ds.read_temp(addr) - offsets[bytes(addr)]
+    else:
+        return ds.read_temp(addr)
+
 #setup 
 adc = machine.ADC(0)
 milliVolts = vin_mV(adc.read,adcScl)    # want to sleep longer if voltage is low
@@ -53,6 +61,8 @@ if milliVolts < nomVolts*8/10:
     sleepTime = sleepTime*3
 if milliVolts < nomVolts*7/10:
     sleepTime = sleepTime*10 
+if milliVolts < nomVolts*6/10:
+    sleepTime = sleepTime*10
 
 if sleepTime > 4200000:
     sleepTime = 4200000    # around 70 minutes (max RTC timeout) if very low battery
@@ -134,7 +144,7 @@ if highPin is not None:
 if lowPin is not None:
     message = message + ", 'sw_low' : "+pin_str(lowPin)
 if tempFlg:
-    message = message + ", 'temperature' : " + str(ds.read_temp(roms[0]))
+    message += ", 'temperature' : {}".format(readDS(roms[0]))
     # any additional 1W sensors will carry on at temp3 etc.
     if len(roms) > 1:
             for ti in range(1,len(roms)):
@@ -149,14 +159,7 @@ if sht30Flag:
 message = message + ", 'RSSI' : " + str(RSSI)
 message = message + "}"
 
-# add timestamp, using NTP synch if possible
-import ntptime
-ntptime.host = "0.ca.pool.ntp.org"
-try:
-    ntptime.settime()
-    print("ntptime worked")
-except:
-    print("ntptime error: ")
+# add timestamp, NTP sync now in boot.py
 
 message = "{'ts': " + str(time.time()*1000 + 946684800000) + ", 'values': " + message + "}"
 
