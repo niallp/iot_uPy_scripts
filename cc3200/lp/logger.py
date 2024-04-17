@@ -110,43 +110,52 @@ c.set_callback(checkStop_cb)
 tb = MQTTClient(brdName,'thingsboard.balsk.ca',keepalive=30,user=userToken,password='')
 utime.sleep(1)
 
+controlFlg = False
+
 try:
     c.connect()
     c.subscribe(brdName+"/loggerStop")
-    print("connecting to mqtt")
+    print("connected to mqtt")
+    controlFlg = True
 except:
-    print("error connecting to mqtt, resetting")
-    utime.sleep(3)
-    machine.reset()
+    print("error connecting to mqtt, no control")
 
 
 
 while not loggerStop:
     try:
-        tb.connect()
-        print("connecting to thingsboard")
         tb_msg = "{"
-        c.publish(brdName+"/iter",str(pubCount))
+        if controlFlg:
+            c.publish(brdName+"/iter",str(pubCount))
+        else:
+            print("Iter: {}",str(pubCount))
         for topic,chScl in adc.items():
             mVolts = volt_str(chScl[0],chScl[1])
-            c.publish(brdName+"/"+topic,mVolts)
             tb_msg += "'{}' : {},".format(topic,mVolts)
+            if controlFlg:
+                c.publish(brdName+"/"+topic,mVolts)
         if tempFlg:
             tempStr = dieTemp_str(i2c,TMP006_ADDR)
             tb_msg += "'temperature' : {},".format(tempStr)
-            c.publish(brdName+"/temperature",tempStr)
-        c.publish(brdName+"/sw_high",sw_str(sw_hi))
-        c.publish(brdName+"/sw_low",sw_str(sw_lo))
+            if controlFlg:
+                c.publish(brdName+"/temperature",tempStr)
+        if controlFlg:
+            c.publish(brdName+"/sw_high",sw_str(sw_hi))
+            c.publish(brdName+"/sw_low",sw_str(sw_lo))
         tb_msg += "'sw_high' : {}, 'sw_low' : {} }}".format(sw_str(sw_hi),sw_str(sw_lo))
+        tb.connect()
+        print("connected to thingsboard")
         tb.publish("v1/devices/me/telemetry",tb_msg)
         nextCount += 1
         tb.disconnect()
         while nextCount > pubCount and not loggerStop:
-            c.check_msg()
+            if controlFlg:
+                c.check_msg()
             machine.lightsleep()    # now RTC on 1 Hz tick
     except:
-        utime.sleep(30)
-        machine.reset()
+        print("error publishing to tb, should queue data")
+        utime.sleep(3)
+#        machine.reset()
 
 c.disconnect()
 

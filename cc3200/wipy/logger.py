@@ -103,9 +103,9 @@ utime.sleep(1)
 while True:
     try:
         c.connect()
-        print("connecting to mqtt")
+        print("connected to mqtt")
         tb.connect()
-        print("connecting to thingsboard")
+        print("connected to thingsboard")
         # buffer this measurement, take time (serial)
         dist_s = dist_str(uart,s_pwr,tx_en)
         c.publish(brdName+"/iter",str(pubCount))
@@ -120,7 +120,12 @@ while True:
         c.disconnect()
         tb.disconnect()
     except OSError:
+        print("OError, reset in 30 seconds")
         utime.sleep(30)
+        machine.reset()
+    except:
+        print("other errors, resetting")
+        utime.sleep(60)
         machine.reset()
     while nextCount > pubCount:
         machine.lightsleep()
