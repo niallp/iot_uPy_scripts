@@ -1,0 +1,18 @@
+# test script for toggling FTDI GPIO5 (reset on Launchpad)
+
+from pyftdi.ftdi import Ftdi
+
+Ftdi.add_custom_vendor(0x0451,'TI')
+Ftdi.add_custom_product(0x0451,0xc32a,'Launchpad')
+
+#Ftdi.show_devices()
+
+from pyftdi.gpio import GpioAsyncController
+from time import sleep
+
+gpio = GpioAsyncController()
+gpio.configure('ftdi://TI:Launchpad:cc3101/1',direction=0x20)
+
+gpio.write(0x00)
+sleep(0.01)
+gpio.write(0x20)
