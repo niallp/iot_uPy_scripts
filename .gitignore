@@ -1,2 +1,3 @@
 *.swp
 netConfig.py
+__pycache__
