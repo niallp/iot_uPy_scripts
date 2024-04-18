@@ -24,6 +24,9 @@ from boardCfg import oneWirePin
 from boardCfg import dhtPin
 from boardCfg import sht30Pins
 from netConfig import RSSI
+from boardCfg import minTime
+from boardCfg import nomVolts
+from ds18B20cal import offsets
  
 # now uses calibrated function on ESP32 instead of manual scaling
 def vin_mV(adc,scl):
@@ -42,22 +45,34 @@ def pin_str(gpio):
     pin = machine.Pin(gpio,machine.Pin.IN,machine.Pin.PULL_UP)
     return '1' if pin.value() == 0 else '0'
 
+def readDS(addr):
+    global offsets
+    if bytes(addr) in offsets:
+        return ds.read_temp(addr) - offsets[bytes(addr)]
+    else:
+        return ds.read_temp(addr)
+
+
 from machine import ADC, Pin
 adc = ADC(Pin(3))
 adc.atten(ADC.ATTN_11DB)
 #print("16bit Val: ", adc.read_u16())
 #print("uv Val: ", adc.read_uv())
 milliVolts = vin_mV(adc,adcScl)    # want to sleep longer if voltage is low
-print("milliVolts: ", milliVolts)
-'''
-sleepTime = 60000
-if milliVolts < 3700:
-    sleepTime = sleepTime*10
-if milliVolts < 3400:
+
+sleepTime = minTime*1000
+if milliVolts < nomVolts*9/10:
     sleepTime = sleepTime*3
-if milliVolts < 3200:
-    sleepTime = sleepTime*4     # around 2 hours if very low battery
-'''
+if milliVolts < nomVolts*8/10:
+    sleepTime = sleepTime*3
+if milliVolts < nomVolts*7/10:
+    sleepTime = sleepTime*10 
+if milliVolts < nomVolts*6/10:
+    sleepTime = sleepTime*10
+
+if sleepTime > 4200000:
+    sleepTime = 4200000    # around 70 minutes (max RTC timeout) if very low battery
+
 
 #optional port for mqttHost
 if type(mqttHost) is tuple:
@@ -132,14 +147,11 @@ if sht30Flag:
     except:
         sht30Flag = False
     
-message = "{ "
-message = message + "'volts' : " + str(milliVolts/1000)
-message = message + ", 'RSSI' : " + str(netConfig.RSSI)
+message = "{{ 'volts' : {:.3f}, 'RSSI' : {}".format(milliVolts/1000,RSSI)
 if sht30Flag:
-    message = message + ", 'temp2': "+ str(t2)
-    message = message + ", 'humidity': "+ str(rh)
+    message = message + ", 'temp2': {:.2f}, 'humidity': {:.1f}".format(t2,rh)
 if tempFlg:
-    message = message + ", 'temperature' : " + str(ds.read_temp(roms[0]))
+    message = message + ", 'temperature' : {:.2f}".format(readDS(roms[0]))
 message = message + " }"
     
 import fileQueue
@@ -187,6 +199,5 @@ else:
     print("Adding to queue: " + message )
 
     
-machine.deepsleep(10000)
-
+machine.deepsleep(sleepTime)
 

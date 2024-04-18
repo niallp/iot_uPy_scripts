@@ -8,5 +8,5 @@ lowPin = None
 oneWirePin = 5
 dhtPin = None
 sht30Pins = (8,10)
-minTime = 600
-nomVolts = 4000
+minTime = 10
+nomVolts = 3800
