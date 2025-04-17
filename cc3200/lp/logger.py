@@ -14,9 +14,13 @@ from umqtt_simple import MQTTClient
 if machine.unique_id() == b'TJ\x16.\xdb\xfe':
     brdName = 'lp2'
     userToken = 'qwA3HRsc2WNu4Fi0Qmpy'
+    # needs to be updated for pressure sensors ADC input range 1.467 V FS (1.1 V * 4/3)
+    adc = { 'v1' : (1,1467), 'v2' : (2,1467), 'v3' : (3,1467) }
 else:
     brdName = 'lp1'
     userToken = 'taar3KNm6nR6Bu9iThXV'  # for thingsboard
+    # single point calibration against MS8209 DVM, 18dec2022
+    adc = { 'vB24' : (1,33212), 'vB12' : (2,17061), 'vSolar' : (3,45139) }
 
 
 TMP006_ADDR = 65                    # TMP006 on default I2C bus, just using die temperature for now
@@ -87,8 +91,6 @@ if TMP006_ADDR in i2c.scan():
 sw_hi = Pin('GP13', mode=Pin.IN, pull=None)  # left hand (SW3), note external pulldown
 sw_lo = Pin('GP22', mode=Pin.IN, pull=None)  # right hand (SW2)
 
-# single point calibration against MS8209 DVM, 18dec2022
-adc = { 'vB24' : (1,33212), 'vB12' : (2,17061), 'vSolar' : (3,45139) }
 
 pubCount = 0
 nextCount = pubCount
